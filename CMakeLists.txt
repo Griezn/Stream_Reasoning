@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 project(SR C CXX)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -16,3 +16,5 @@ add_subdirectory(tests)
 include_directories(include)
 
 add_library(SR STATIC include/query.h src/query.c)
+
+enable_testing()
