@@ -68,7 +68,7 @@ TEST(QueryTests, test_query_filter) {
         .type = FILTER,
         .left = NULL,
         .right = NULL,
-        .params.filter = {check_filter}
+        .params = {.filter = check_filter}
     };
 
     query_t query_filter = {.root = &filter_op};
