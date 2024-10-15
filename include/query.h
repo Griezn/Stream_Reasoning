@@ -14,11 +14,11 @@ enum OPERATORS {
 
 
 struct join_params {
-    bool (*check)(int *in1, int *in2);
+    bool (*check)(const int *in1, const int *in2);
 };
 
 struct filter_params {
-    bool (*check)(int *in);
+    bool (*check)(const int *in);
 };
 
 struct window_params {
@@ -27,7 +27,7 @@ struct window_params {
 
 
 typedef union Parameters {
-    struct join_params join;
+    struct join_params   join;
     struct filter_params filter;
     struct window_params window;
 } parameter_t;

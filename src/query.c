@@ -4,22 +4,21 @@
 #include "query.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 
-void join(int *in1, int *in2, int **out, parameter_t param)
+void join(const int *in1, const int *in2, int **out, const parameter_t param)
 {
     int *local_out = malloc(sizeof(int));
     *out = local_out;
-    printf("The join funftion\n");
+
     if (param.join.check(in1, in2)) {
-        printf("Join allowed\n");
+        *local_out = (*in1) + (*in2);
     }
 };
 
 
-void filter(int *in, int **out, parameter_t param)
+void filter(const int *in, int **out, const parameter_t param)
 {
     int *local_out = malloc(sizeof(int));
     *out = local_out;
@@ -30,12 +29,12 @@ void filter(int *in, int **out, parameter_t param)
 }
 
 
-void window(int *in, int **out, parameter_t param)
+void window(const int *in, int **out, const parameter_t param)
 {
     int *local_out = malloc(sizeof(int));
     *out = local_out;
-    printf("The window function, %p\n", in);
-    printf("The window size is: %i\n", param.window.window_size);
+
+    *local_out = (*in) * param.window.window_size;
 }
 
 
