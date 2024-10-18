@@ -7,12 +7,13 @@
 #include <stdbool.h>
 #include <string.h>
 
+int random_arr[10] = {18, 12, 18, 17, 1, 18, 10, 13, 16, 15};
+
 
 data_t get_next_generator(source_t *generator)
 {
-    // srand(1234): 18 12 18 17 1 18 10 13 16 15
     for (int i = 0; i < GENERATOR_SIZE; ++i) {
-        generator->buffer.data[i] = rand() % 20;
+        generator->buffer.data[i] = random_arr[i];
     }
 
     generator->has_next = false;

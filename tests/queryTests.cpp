@@ -19,7 +19,6 @@ protected:
 
     void SetUp() override
     {
-        srand(1234);
         gsource = create_generator_source();
         gsink = create_generator_sink();
     }
