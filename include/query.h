@@ -24,7 +24,7 @@ struct filter_params {
 };
 
 struct window_params {
-    int window_size;
+    unsigned char window_size;
 };
 
 
