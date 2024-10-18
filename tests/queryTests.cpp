@@ -3,18 +3,42 @@
 //
 #include <gtest/gtest.h>
 
+#include "utils.hpp"
+
 extern "C" {
     #include "query.h"
+    #include "source.h"
+    #include "generator.h"
 }
 
-bool check_join(const int *in1, const int *in2)
+
+class QueryTestFixture : public ::testing::Test {
+protected:
+    source_t gsource = {};
+    sink_t gsink = {};
+
+    void SetUp() override
+    {
+        srand(1234);
+        gsource = create_generator_source();
+        gsink = create_generator_sink();
+    }
+
+    void TearDown() override
+    {
+        free_generator_source(&gsource);
+        free_generator_sink(&gsink);
+    }
+};
+
+
+bool check_join(const int in1, const int in2)
 {
-    return *in1 > *in2;
+    return in1 > in2;
 }
 
-TEST(QueryTests, test_query_join_death_no_children)
+TEST_F(QueryTestFixture, test_query_join_death_no_children)
 {
-    int *ptr = nullptr;
     operator_t join_op = {
         .type = JOIN,
         .left = nullptr,
@@ -24,12 +48,11 @@ TEST(QueryTests, test_query_join_death_no_children)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .left and .right are NULL
-    ASSERT_DEATH(execute_query(&query_join, ptr, &ptr), "");
+    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
 }
 
-TEST(QueryTests, test_query_join_death_no_left_child)
+TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
 {
-    int *ptr = nullptr;
     operator_t join_op = {
         .type = JOIN,
         .left = nullptr,
@@ -39,12 +62,11 @@ TEST(QueryTests, test_query_join_death_no_left_child)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .left is NULL
-    ASSERT_DEATH(execute_query(&query_join, ptr, &ptr), "");
+    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
 }
 
-TEST(QueryTests, test_query_join_death_no_right_child)
+TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
 {
-    int *ptr = nullptr;
     operator_t join_op = {
         .type = JOIN,
         .left = &join_op,
@@ -54,20 +76,17 @@ TEST(QueryTests, test_query_join_death_no_right_child)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .right is NULL
-    ASSERT_DEATH(execute_query(&query_join, ptr, &ptr), "");
+    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
 }
 
 
-bool check_filter(const int *in)
+bool check_filter(const int in)
 {
-    return *in < 2;
+    return in < 10;
 }
 
-TEST(QueryTests, test_query_filter)
+TEST_F(QueryTestFixture, test_query_filter)
 {
-    int input = 0;
-    int *out;
-
     operator_t filter_op = {
         .type = FILTER,
         .left = nullptr,
@@ -77,18 +96,14 @@ TEST(QueryTests, test_query_filter)
 
     query_t query_filter = {.root = &filter_op};
 
-    execute_query(&query_filter, &input, &out);
-    ASSERT_EQ(*out, 1);
-
-    free(out);
+    execute_query(&query_filter, &gsource, &gsink);
+    int expected[10] = {17, 11, 17, 16, 2, 17, 9, 12, 15, 14};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
 }
 
 
-TEST(QueryTests, test_query_filter2)
+TEST_F(QueryTestFixture, test_query_filter2)
 {
-    int input = 0;
-    int *out;
-
     operator_t filter_op = {
         .type = FILTER,
         .left = nullptr,
@@ -105,18 +120,14 @@ TEST(QueryTests, test_query_filter2)
 
     query_t query_filter = {.root = &filter_op2};
 
-    execute_query(&query_filter, &input, &out);
-    ASSERT_EQ(*out, 2);
-
-    free(out);
+    execute_query(&query_filter, &gsource, &gsink);
+    int expected[10] = {16, 10, 16, 15, 3, 16, 10, 11, 14, 13};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
 }
 
 
-TEST(QueryTests, test_query_window)
+TEST_F(QueryTestFixture, test_query_window)
 {
-    int input = 1;
-    int *out;
-
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -126,46 +137,38 @@ TEST(QueryTests, test_query_window)
 
     query_t query_window = {.root = &window_op};
 
-    execute_query(&query_window, &input, &out);
-    ASSERT_EQ(*out, 10);
-
-    free(out);
+    execute_query(&query_window, &gsource, &gsink);
+    int expected[10] = {18, 12, 18, 17, 1, 18, 10, 13, 16, 15};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
 }
 
 
-TEST(QueryTests, test_query_window2)
+TEST_F(QueryTestFixture, test_query_window2)
 {
-    int input = 1;
-    int *out;
-
-    operator_t window_op = {
-        .type = WINDOW,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.window = 10}
-    };
-
     operator_t window_op2 = {
         .type = WINDOW,
-        .left = &window_op,
+        .left = nullptr,
         .right = nullptr,
         .params = {.window = 5}
     };
 
-    query_t query_window = {.root = &window_op2};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = &window_op2,
+        .right = nullptr,
+        .params = {.window = 10}
+    };
 
-    execute_query(&query_window, &input, &out);
-    ASSERT_EQ(*out, 50);
+    query_t query_window = {.root = &window_op};
 
-    free(out);
+    execute_query(&query_window, &gsource, &gsink);
+    int expected[5] = {18, 12, 18, 17, 1};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 5);
 }
 
 
-TEST(QueryTests, test_query_join)
+TEST_F(QueryTestFixture, test_query_join)
 {
-    int input = 1;
-    int *out;
-
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -189,9 +192,8 @@ TEST(QueryTests, test_query_join)
 
     query_t query = {.root = &join_op};
 
-    execute_query(&query, &input, &out);
+    execute_query(&query, &gsource, &gsink);
 
-    ASSERT_EQ(*out, 12);
-
-    free(out);
+    int expected[10] = {1, 1, 1, 1, 3, 1, 1, 1, 1, 1};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
 }

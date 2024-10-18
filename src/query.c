@@ -2,47 +2,57 @@
 // Created by Seppe Degryse on 08/10/2024.
 //
 #include "query.h"
+#include "data.h"
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 
-void join(const int *in1, const int *in2, int **out, const parameter_t param)
+void join(const data_t in1, const data_t in2, data_t *out, const parameter_t param)
 {
-    int *local_out = malloc(sizeof(int));
-    *out = local_out;
+    out->data = malloc(in1.size * sizeof(int));
+    out->size = in1.size;
 
-    if (param.join.check(in1, in2)) {
-        *local_out = (*in1) + (*in2);
-    }
-};
-
-
-void filter(const int *in, int **out, const parameter_t param)
-{
-    int *local_out = malloc(sizeof(int));
-    *out = local_out;
-
-    if (param.filter.check(in)) {
-        *local_out = (*in) + 1;
+    for (int i = 0; i < out->size; ++i) {
+        if (param.join.check(in1.data[i], in2.data[i])) {
+            out->data[i] = in1.data[i] - in2.data[i];
+        } else {
+            out->data[i] = in1.data[i] + in2.data[i];
+        }
     }
 }
 
 
-void window(const int *in, int **out, const parameter_t param)
+void filter(const data_t in, data_t *out, const parameter_t param)
 {
-    int *local_out = malloc(sizeof(int));
-    *out = local_out;
+    out->data = malloc(in.size * sizeof(int));
+    out->size = in.size;
 
-    *local_out = (*in) * param.window.window_size;
+    for (int i = 0; i < in.size; ++i) {
+        if (param.filter.check(in.data[i])) {
+            out->data[i] = in.data[i] + 1;
+        }
+        else {
+            out->data[i] = in.data[i] - 1;
+        }
+    }
 }
 
 
-void execute_operator(operator_t *operator_, int *in, int **out)
+void window(const data_t in, data_t *out, const parameter_t param)
 {
-    assert(operator_);
-    int *tmpo1 = in;
-    int *tmpo2 = NULL;
+    out->data = malloc(param.window.window_size * sizeof(int));
+    out->size = param.window.window_size;
+    memcpy(out->data, in.data, param.window.window_size * sizeof(int));
+}
+
+
+void execute_operator(const operator_t *operator_, const data_t in, data_t *out)
+{
+    assert(in.data);
+    data_t tmpo1 = in;
+    data_t tmpo2 = {NULL, 0};
 
     switch (operator_->type) {
         case JOIN:
@@ -68,17 +78,20 @@ void execute_operator(operator_t *operator_, int *in, int **out)
             break;
     }
 
-    if (tmpo1 != in) {
-        free(tmpo1);
+    if (tmpo1.data != in.data) {
+        free(tmpo1.data);
     }
-    if (tmpo2) {
-        free(tmpo2);
+    if (tmpo2.data) {
+        free(tmpo2.data);
     }
 }
 
 
-void execute_query(query_t *query, int *in, int **out)
+void execute_query(const query_t *query, source_t *source, const sink_t *sink)
 {
-    assert(query);
-    execute_operator(query->root, in, out);
+    data_t data = {NULL, 0};
+    while (source->has_next) {
+        execute_operator(query->root, source->get_next(source), &data);
+        sink->push_next(sink, data);
+    }
 }

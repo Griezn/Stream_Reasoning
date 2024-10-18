@@ -15,6 +15,10 @@ add_subdirectory(tests)
 
 include_directories(include)
 
-add_library(SR STATIC include/query.h src/query.c)
+add_library(SR STATIC include/query.h src/query.c
+        src/generator.c
+        include/generator.h
+        include/source.h
+        include/data.h)
 
 enable_testing()

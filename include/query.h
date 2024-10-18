@@ -5,6 +5,8 @@
 #define QUERY_H
 #include <stdbool.h>
 
+#include "source.h"
+
 
 enum OPERATORS {
     JOIN,
@@ -14,11 +16,11 @@ enum OPERATORS {
 
 
 struct join_params {
-    bool (*check)(const int *in1, const int *in2);
+    bool (*check)(int in1, int in2);
 };
 
 struct filter_params {
-    bool (*check)(const int *in);
+    bool (*check)(int in);
 };
 
 struct window_params {
@@ -46,6 +48,6 @@ typedef struct Query {
 } query_t;
 
 
-void execute_query(query_t *query, int *in, int **out);
+void execute_query(const query_t *query, source_t *source, const sink_t *sink);
 
 #endif //QUERY_H
