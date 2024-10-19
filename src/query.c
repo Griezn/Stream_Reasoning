@@ -43,7 +43,7 @@ void filter(const data_t *in, data_t *out, const parameter_t param)
 
 void window(data_t *in, data_t *out, const parameter_t param)
 {
-    int size = min(in->size, param.window.window_size);
+    const unsigned char size = min(in->size, param.window.window_size);
     out->data = malloc(size  * sizeof(int));
     out->size = size;
 
