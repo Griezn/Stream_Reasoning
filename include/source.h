@@ -11,12 +11,12 @@
 typedef struct Source {
     data_t buffer;
     bool has_next;
-    data_t (*get_next)(struct Source *self);
+    data_t* (*get_next)(struct Source *self);
 } source_t;
 
 typedef struct Sink {
     data_t buffer;
-    void (*push_next)(const struct Sink *self, data_t data);
+    void (*push_next)(struct Sink *self, const data_t *data);
 } sink_t;
 
 #endif //SOURCE_H

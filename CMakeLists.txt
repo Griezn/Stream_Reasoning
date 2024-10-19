@@ -19,6 +19,7 @@ add_library(SR STATIC include/query.h src/query.c
         src/generator.c
         include/generator.h
         include/source.h
-        include/data.h)
+        include/data.h
+        include/utils.h)
 
 enable_testing()

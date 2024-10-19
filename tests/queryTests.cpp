@@ -131,14 +131,15 @@ TEST_F(QueryTestFixture, test_query_window)
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
-        .params = {.window = 10}
+        .params = {.window = 7}
     };
 
     query_t query_window = {.root = &window_op};
 
     execute_query(&query_window, &gsource, &gsink);
-    int expected[10] = {18, 12, 18, 17, 1, 18, 10, 13, 16, 15};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
+    int expected[7] = {18, 12, 18, 17, 1, 18, 10};
+    ASSERT_ARR_EQ(gsink.buffer.data, expected, 7);
+    ASSERT_EQ(gsource.buffer.size, 3);
 }
 
 
@@ -148,33 +149,32 @@ TEST_F(QueryTestFixture, test_query_window2)
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
-        .params = {.window = 5}
+        .params = {.window = 10}
     };
 
     operator_t window_op = {
         .type = WINDOW,
         .left = &window_op2,
         .right = nullptr,
-        .params = {.window = 10}
+        .params = {.window = 5}
     };
 
     query_t query_window = {.root = &window_op};
 
     execute_query(&query_window, &gsource, &gsink);
-    int expected[5] = {18, 12, 18, 17, 1};
+    int expected[10] = {18, 12, 18, 17, 1};
     ASSERT_ARR_EQ(gsink.buffer.data, expected, 5);
+}
+
+
+bool check_filter2(const int in)
+{
+    return in < 15;
 }
 
 
 TEST_F(QueryTestFixture, test_query_join)
 {
-    operator_t window_op = {
-        .type = WINDOW,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.window = 10}
-    };
-
     operator_t filter_op = {
         .type = FILTER,
         .left = nullptr,
@@ -182,10 +182,17 @@ TEST_F(QueryTestFixture, test_query_join)
         .params = {.filter = check_filter}
     };
 
+    operator_t filter2_op = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = check_filter2}
+    };
+
     operator_t join_op = {
         .type = JOIN,
-        .left = &window_op,
-        .right = &filter_op,
+        .left = &filter_op,
+        .right = &filter2_op,
         .params = {.join = check_join}
     };
 
@@ -193,6 +200,6 @@ TEST_F(QueryTestFixture, test_query_join)
 
     execute_query(&query, &gsource, &gsink);
 
-    int expected[10] = {1, 1, 1, 1, 3, 1, 1, 1, 1, 1};
+    int expected[10] = {34, 24, 34, 32, 4, 34, 20, 26, 30, 28};
     ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
 }
