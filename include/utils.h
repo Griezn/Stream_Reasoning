@@ -5,15 +5,12 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define max(a,b) \
-({ __typeof__ (a) _a = (a); \
-__typeof__ (b) _b = (b); \
-_a > _b ? _a : _b; })
+static __inline__ int max(const int a, const int b) {
+    return a > b ? a : b;
+}
 
-
-#define min(a,b) \
-({ __typeof__ (a) _a = (a); \
-__typeof__ (b) _b = (b); \
-_a < _b ? _a : _b; })
+static __inline__ int min(const int a, const int b) {
+    return a < b ? a : b;
+}
 
 #endif //UTILS_H
