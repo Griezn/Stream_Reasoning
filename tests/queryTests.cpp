@@ -3,7 +3,7 @@
 //
 #include <gtest/gtest.h>
 
-#include "utils.hpp"
+#include "test_utils.hpp"
 
 extern "C" {
     #include "query.h"

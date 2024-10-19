@@ -14,7 +14,7 @@ include_directories(../include)
 add_executable(
         SR_tests
         queryTests.cpp
-        utils.hpp
+        test_utils.hpp
 )
 target_link_libraries(
         SR_tests
