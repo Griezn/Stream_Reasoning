@@ -5,11 +5,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-static __inline__ int max(const int a, const int b) {
+static int max(const int a, const int b) {
     return a > b ? a : b;
 }
 
-static __inline__ int min(const int a, const int b) {
+static int min(const int a, const int b) {
     return a < b ? a : b;
 }
 
