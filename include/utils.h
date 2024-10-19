@@ -5,10 +5,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-static int max(const int a, const int b) {
-    return a > b ? a : b;
-}
-
 static int min(const int a, const int b) {
     return a < b ? a : b;
 }
