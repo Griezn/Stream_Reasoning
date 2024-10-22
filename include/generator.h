@@ -15,7 +15,7 @@ void free_generator_sink(const sink_t *sink);
 
 #define GENERATOR_SIZE 10
 
-enum subject : unsigned char {
+enum subject {
     SUBJECT_ALICE,
     SUBJECT_BOB,
     SUBJECT_CHARLIE,
@@ -28,7 +28,7 @@ enum subject : unsigned char {
     SUBJECT_PROJECT2,
 };
 
-enum predicate : unsigned char {
+enum predicate {
     PREDICATE_HAS_NAME,
     PREDICATE_HAS_AGE,
     PREDICATE_HAS_SKILL,
@@ -36,7 +36,7 @@ enum predicate : unsigned char {
     PREDICATE_REQUIRES_SKILL,
 };
 
-enum object : unsigned char {
+enum object {
     OBJECT_ALICE,
     OBJECT_BOB,
     OBJECT_CHARLIE,
