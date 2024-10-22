@@ -9,4 +9,8 @@ static int min(const int a, const int b) {
     return a < b ? a : b;
 }
 
+static int max(const int a, const int b) {
+    return a > b ? a : b;
+}
+
 #endif //UTILS_H
