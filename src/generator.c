@@ -4,19 +4,61 @@
 #include "generator.h"
 
 #include <stdlib.h>
-#include <stdbool.h>
 
-int random_arr[10] = {18, 12, 18, 17, 1, 18, 10, 13, 16, 15};
 
+triple_t triples[] = {
+    {SUBJECT_ALICE, PREDICATE_HAS_NAME, OBJECT_ALICE},
+    {SUBJECT_ALICE, PREDICATE_HAS_AGE, 30},
+    {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    {SUBJECT_ALICE, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_BOB, PREDICATE_HAS_NAME, OBJECT_BOB},
+    {SUBJECT_BOB, PREDICATE_HAS_AGE, 25},
+    {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+    {SUBJECT_BOB, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
+
+    {SUBJECT_CHARLIE, PREDICATE_HAS_NAME, OBJECT_CHARLIE},
+    {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},
+    {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    {SUBJECT_CHARLIE, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_DAVID, PREDICATE_HAS_NAME, OBJECT_DAVID},
+    {SUBJECT_DAVID, PREDICATE_HAS_AGE, 40},
+    {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    {SUBJECT_DAVID, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_EMILY, PREDICATE_HAS_NAME, OBJECT_EMILY},
+    {SUBJECT_EMILY, PREDICATE_HAS_AGE, 28},
+    {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    {SUBJECT_EMILY, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_FRANK, PREDICATE_HAS_NAME, OBJECT_FRANK},
+    {SUBJECT_FRANK, PREDICATE_HAS_AGE, 32},
+    {SUBJECT_FRANK, PREDICATE_HAS_SKILL, OBJECT_GRAPHIC_DESIGN},
+    {SUBJECT_FRANK, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_GRACE, PREDICATE_HAS_NAME, OBJECT_GRACE},
+    {SUBJECT_GRACE, PREDICATE_HAS_AGE, 29},
+    {SUBJECT_GRACE, PREDICATE_HAS_SKILL, OBJECT_MARKETING},
+    {SUBJECT_GRACE, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
+
+    {SUBJECT_HELEN, PREDICATE_HAS_NAME, OBJECT_HELEN},
+    {SUBJECT_HELEN, PREDICATE_HAS_AGE, 45},
+    {SUBJECT_HELEN, PREDICATE_HAS_SKILL, OBJECT_PROJECT_MANAGEMENT},
+    {SUBJECT_HELEN, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+    {SUBJECT_PROJECT1, PREDICATE_HAS_NAME, OBJECT_AI_RESEARCH},
+    {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+    {SUBJECT_PROJECT2, PREDICATE_HAS_NAME, OBJECT_DATA_SCIENCE},
+    {SUBJECT_PROJECT2, PREDICATE_REQUIRES_SKILL, OBJECT_DATA_ANALYSIS}
+};
+
+#define NUM_TRIPLES (sizeof(triples) / sizeof(triples[0]))
 
 
 data_t* get_next_generator(source_t *generator)
 {
-    for (int i = 0; i < GENERATOR_SIZE - generator->buffer.size; ++i) {
-        generator->buffer.data[i] = random_arr[i];
-    }
-
-    generator->buffer.size = GENERATOR_SIZE;
     generator->has_next = false;
     return  &generator->buffer;
 }
@@ -25,7 +67,7 @@ data_t* get_next_generator(source_t *generator)
 source_t create_generator_source()
 {
     return (source_t) {
-        .buffer = {malloc(GENERATOR_SIZE * sizeof(int)), 0},
+        .buffer = {triples, NUM_TRIPLES},
         .has_next = true,
         .get_next = get_next_generator
     };
@@ -34,7 +76,7 @@ source_t create_generator_source()
 
 void free_generator_source(const source_t *source)
 {
-    free(source->buffer.data);
+    (void)source;
 }
 
 
@@ -47,7 +89,7 @@ void push_next_sink(sink_t *gsink, const data_t *data)
 sink_t create_generator_sink()
 {
     return (sink_t) {
-        .buffer = {malloc(GENERATOR_SIZE * sizeof(int)), 0},
+        .buffer = {malloc(NUM_TRIPLES * sizeof(triple_t)), 0},
         .push_next = push_next_sink
     };
 }
