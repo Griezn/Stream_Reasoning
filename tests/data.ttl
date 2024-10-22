@@ -1,0 +1,36 @@
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+# Persons
+ex:alice foaf:name "Alice" .
+ex:alice foaf:age "30" .
+ex:alice ex:hasSkill "Programming" .
+
+ex:bob foaf:name "Bob" .
+ex:bob foaf:age "25" .
+ex:bob ex:hasSkill "Data Analysis" .
+
+ex:charlie foaf:name "Charlie" .
+ex:charlie foaf:age "35" .
+ex:charlie ex:hasSkill "Programming" .
+
+ex:david foaf:name "David" .
+ex:david foaf:age "40" .
+ex:david ex:hasSkill "Programming" .
+
+ex:emily foaf:name "Emily" .
+ex:emily foaf:age "28" .
+ex:emily ex:hasSkill "Programming" .
+
+# Projects
+ex:project1 ex:hasName "AI Research" .
+ex:project1 ex:requiresSkill "Programming" .
+
+ex:project2 ex:hasName "Data Science" .
+ex:project2 ex:requiresSkill "Data Analysis" .
+
+# Assignments
+ex:alice ex:worksOn ex:project1 .
+ex:bob ex:worksOn ex:project2 .
+ex:charlie ex:worksOn ex:project1 .
+ex:david ex:worksOn ex:project1 .
