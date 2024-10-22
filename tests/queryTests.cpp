@@ -31,9 +31,9 @@ protected:
 };
 
 
-bool check_join(const int in1, const int in2)
+bool check_join(const triple_t in1, const triple_t in2)
 {
-    return in1 > in2;
+    return in1.object == in2.object;
 }
 
 TEST_F(QueryTestFixture, test_query_join_death_no_children)
@@ -79,9 +79,9 @@ TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
 }
 
 
-bool check_filter(const int in)
+bool check_filter(const triple_t in)
 {
-    return in < 10;
+    return in.predicate == PREDICATE_HAS_SKILL;
 }
 
 TEST_F(QueryTestFixture, test_query_filter)
@@ -96,10 +96,23 @@ TEST_F(QueryTestFixture, test_query_filter)
     query_t query_filter = {.root = &filter_op};
 
     execute_query(&query_filter, &gsource, &gsink);
-    int expected[10] = {17, 11, 17, 16, 2, 17, 9, 12, 15, 14};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
+    triple_t expected[8] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_FRANK, PREDICATE_HAS_SKILL, OBJECT_GRAPHIC_DESIGN},
+        {SUBJECT_GRACE, PREDICATE_HAS_SKILL, OBJECT_MARKETING},
+        {SUBJECT_HELEN, PREDICATE_HAS_SKILL, OBJECT_PROJECT_MANAGEMENT},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 5));
 }
 
+bool check_filter2(const triple_t in)
+{
+    return in.object == OBJECT_PROGRAMMING;
+}
 
 TEST_F(QueryTestFixture, test_query_filter2)
 {
@@ -114,14 +127,19 @@ TEST_F(QueryTestFixture, test_query_filter2)
         .type = FILTER,
         .left = &filter_op,
         .right = nullptr,
-        .params = {.filter = {check_filter}}
+        .params = {.filter = {check_filter2}}
     };
 
     query_t query_filter = {.root = &filter_op2};
 
     execute_query(&query_filter, &gsource, &gsink);
-    int expected[10] = {16, 10, 16, 15, 3, 16, 10, 11, 14, 13};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
+    triple_t expected[4] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING}
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 4));
 }
 
 
@@ -131,15 +149,24 @@ TEST_F(QueryTestFixture, test_query_window)
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
-        .params = {.window = {7}}
+        .params = {.window = {8}}
     };
 
     query_t query_window = {.root = &window_op};
 
     execute_query(&query_window, &gsource, &gsink);
-    int expected[7] = {18, 12, 18, 17, 1, 18, 10};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 7);
-    ASSERT_EQ(gsource.buffer.size, 3);
+    triple_t expected[8] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_NAME, OBJECT_ALICE},
+        {SUBJECT_ALICE, PREDICATE_HAS_AGE, 30},
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_ALICE, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+        {SUBJECT_BOB, PREDICATE_HAS_NAME, OBJECT_BOB},
+        {SUBJECT_BOB, PREDICATE_HAS_AGE, 25},
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_BOB, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
 }
 
 
@@ -149,50 +176,60 @@ TEST_F(QueryTestFixture, test_query_window2)
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
-        .params = {.window = 10}
+        .params = {.window = 16}
     };
 
     operator_t window_op = {
         .type = WINDOW,
         .left = &window_op2,
         .right = nullptr,
-        .params = {.window = 5}
+        .params = {.window = 8}
     };
 
     query_t query_window = {.root = &window_op};
 
     execute_query(&query_window, &gsource, &gsink);
-    int expected[10] = {18, 12, 18, 17, 1};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 5);
+    triple_t expected[8] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_NAME, OBJECT_ALICE},
+        {SUBJECT_ALICE, PREDICATE_HAS_AGE, 30},
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_ALICE, PREDICATE_WORKS_ON, SUBJECT_PROJECT1},
+
+        {SUBJECT_BOB, PREDICATE_HAS_NAME, OBJECT_BOB},
+        {SUBJECT_BOB, PREDICATE_HAS_AGE, 25},
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_BOB, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
 }
 
 
-bool check_filter2(const int in)
+bool check_filter3(const triple_t in)
 {
-    return in < 15;
+    return in.predicate == PREDICATE_REQUIRES_SKILL;
 }
 
 
 TEST_F(QueryTestFixture, test_query_join)
 {
-    operator_t filter_op = {
+    operator_t filter_has_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
         .params = {.filter = {check_filter}}
     };
 
-    operator_t filter2_op = {
+    operator_t filter_req_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter2}}
+        .params = {.filter = {check_filter3}}
     };
 
     operator_t join_op = {
         .type = JOIN,
-        .left = &filter_op,
-        .right = &filter2_op,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
         .params = {.join = check_join}
     };
 
@@ -200,6 +237,12 @@ TEST_F(QueryTestFixture, test_query_join)
 
     execute_query(&query, &gsource, &gsink);
 
-    int expected[10] = {34, 24, 34, 32, 4, 34, 20, 26, 30, 28};
-    ASSERT_ARR_EQ(gsink.buffer.data, expected, 10);
+    triple_t expected[5] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 5));
 }

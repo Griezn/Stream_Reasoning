@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "source.h"
+#include "data.h"
 
 
 enum OPERATORS {
@@ -16,11 +17,11 @@ enum OPERATORS {
 
 
 struct join_params {
-    bool (*check)(int in1, int in2);
+    bool (*check)(triple_t in1, triple_t in2);
 };
 
 struct filter_params {
-    bool (*check)(int in);
+    bool (*check)(triple_t in);
 };
 
 struct window_params {
