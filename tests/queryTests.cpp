@@ -210,6 +210,7 @@ bool check_filter3(const triple_t in)
 }
 
 
+/// @test Filter to get people who have a skill that is required by a project
 TEST_F(QueryTestFixture, test_query_join)
 {
     operator_t filter_has_skill = {
@@ -245,4 +246,81 @@ TEST_F(QueryTestFixture, test_query_join)
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 5));
+}
+
+
+bool check_filter4(const triple_t in)
+{
+    return in.predicate == PREDICATE_HAS_AGE;
+}
+
+
+bool check_join2(const triple_t in1, const triple_t in2)
+{
+    return in1.subject == in2.subject;
+}
+
+
+bool check_filter5(const triple_t in)
+{
+    return in.object > 30;
+}
+
+
+/// @test Filter to get people who have a skill that is required by a project
+/// And that are older than 30
+TEST_F(QueryTestFixture, test_query_1)
+{
+    operator_t filter_has_skill = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = {check_filter}}
+    };
+
+    operator_t filter_req_skill = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = {check_filter3}}
+    };
+
+    operator_t join_skill = {
+        .type = JOIN,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
+        .params = {.join = check_join}
+    };
+
+    operator_t filter_has_age = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = check_filter4}
+    };
+
+    operator_t join_age = {
+        .type = JOIN,
+        .left = &filter_has_age,
+        .right = &join_skill,
+        .params = {.join = check_join2}
+    };
+
+    operator_t filter_older = {
+        .type = FILTER,
+        .left = &join_age,
+        .right = nullptr,
+        .params = {.filter = check_filter5}
+    };
+
+    query_t query = {.root = & filter_older};
+
+    execute_query(&query, &gsource, &gsink);
+
+    triple_t expected[2] = {
+        {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},
+        {SUBJECT_DAVID, PREDICATE_HAS_AGE, 40},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 2));
+
 }
