@@ -83,6 +83,7 @@ void free_generator_source(const source_t *source)
 
 void push_next_sink(sink_t *gsink, const data_t *data)
 {
+    free_generator_sink(gsink);
     gsink->buffer = *data;
 }
 
