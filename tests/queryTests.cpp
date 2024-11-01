@@ -42,7 +42,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_children)
         .type = JOIN,
         .left = nullptr,
         .right = nullptr,
-        .params = {.join= {check_join}}
+        .params = {.join= check_join}
     };
     query_t query_join = {.root = &join_op};
 
@@ -56,7 +56,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
         .type = JOIN,
         .left = nullptr,
         .right = &join_op,
-        .params = {.join = {check_join}}
+        .params = {.join = check_join}
     };
     query_t query_join = {.root = &join_op};
 
@@ -70,7 +70,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
         .type = JOIN,
         .left = &join_op,
         .right = nullptr,
-        .params = {.join = {check_join}}
+        .params = {.join = check_join}
     };
     query_t query_join = {.root = &join_op};
 
@@ -90,7 +90,7 @@ TEST_F(QueryTestFixture, test_query_filter)
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter}}
+        .params = {.filter = check_filter}
     };
 
     query_t query_filter = {.root = &filter_op};
@@ -120,14 +120,14 @@ TEST_F(QueryTestFixture, test_query_filter2)
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter}}
+        .params = {.filter = check_filter}
     };
 
     operator_t filter_op2 = {
         .type = FILTER,
         .left = &filter_op,
         .right = nullptr,
-        .params = {.filter = {check_filter2}}
+        .params = {.filter = check_filter2}
     };
 
     query_t query_filter = {.root = &filter_op2};
@@ -149,7 +149,7 @@ TEST_F(QueryTestFixture, test_query_window)
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
-        .params = {.window = {8}}
+        .params = {.window = 8}
     };
 
     query_t query_window = {.root = &window_op};
@@ -217,14 +217,14 @@ TEST_F(QueryTestFixture, test_query_join)
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter}}
+        .params = {.filter = check_filter}
     };
 
     operator_t filter_req_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter3}}
+        .params = {.filter = check_filter3}
     };
 
     operator_t join_op = {
@@ -238,14 +238,23 @@ TEST_F(QueryTestFixture, test_query_join)
 
     execute_query(&query, &gsource, &gsink);
 
-    triple_t expected[5] = {
+    triple_t expected[10] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
         {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_PROJECT2, PREDICATE_REQUIRES_SKILL, OBJECT_DATA_ANALYSIS},
+
         {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
         {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 5));
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 10));
 }
 
 
@@ -275,14 +284,14 @@ TEST_F(QueryTestFixture, test_query_1)
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter}}
+        .params = {.filter = check_filter}
     };
 
     operator_t filter_req_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = {check_filter3}}
+        .params = {.filter = check_filter3}
     };
 
     operator_t join_skill = {
@@ -317,10 +326,15 @@ TEST_F(QueryTestFixture, test_query_1)
 
     execute_query(&query, &gsource, &gsink);
 
-    triple_t expected[2] = {
+    triple_t expected[6] = {
         {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
         {SUBJECT_DAVID, PREDICATE_HAS_AGE, 40},
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 2));
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 6));
 
 }

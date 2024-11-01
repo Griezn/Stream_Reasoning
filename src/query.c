@@ -13,19 +13,19 @@
 /// The join operator
 /// @param in1 The first input stream to be joined
 /// @param in2 The second input stream to be joined
-/// @param out The output stream containing matching triples from the first stream
+/// @param out The output stream containing matching from the first and hte second stream
 /// @param param Join parameters containing a function ptr specifying the join condition
-/// @note The out buffer will likely be larger than the out->size
 void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t param)
 {
-    const unsigned char size = max(in1->size, in2->size);
+    const unsigned char size = max(in1->size, in2->size) + (in1->width + in2->width);
     out->data = malloc(size * sizeof(triple_t));
     out->size = 0;
+    out->width = in1->width + in2->width;
 
-    for (int i = 0; i < in1->size; ++i) {
-        for (int j = 0; j < in2->size; ++j) {
-            if (param.join.check(in1->data[i], in2->data[j])) {
-                out->data[out->size++] = in1->data[i];
+    for (int i = 0; i < in1->size*in2->width; i += in1->width) {
+        for (int j = 0; j < in2->size * in2->width; j += in2->width) {
+            if (join_check(in1, i, in2, j, param.join)) {
+                join_triple_copy(in1, i, in2, j, out);
             }
         }
     }
@@ -39,12 +39,13 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t p
 /// @note The out buffer will likely be larger than the out->size
 void filter(const data_t *in, data_t *out, const parameter_t param)
 {
-    out->data = malloc(in->size * sizeof(triple_t));
+    out->data = malloc(in->size * in->width * sizeof(triple_t));
     out->size = 0;
+    out->width = in->width;
 
-    for (int i = 0; i < in->size; ++i) {
-        if (param.filter.check(in->data[i])) {
-            out->data[out->size++] = in->data[i];
+    for (int i = 0; i < in->size*in->width; i += in->width) {
+        if (filter_check(in, i, param.filter)) {
+            triple_copy(in, i, out);
         }
     }
 }
@@ -56,9 +57,10 @@ void filter(const data_t *in, data_t *out, const parameter_t param)
 /// @param param The window parameter containing a size of the window
 void window(data_t *in, data_t *out, const parameter_t param)
 {
-    const unsigned char size = min(in->size, param.window.window_size);
+    const unsigned char size = min(in->size, param.window) * in->width;
     out->data = malloc(size  * sizeof(triple_t));
     out->size = size;
+    out->width = in->width;
 
     in->size = in->size - size;
     memcpy(out->data, in->data, size * sizeof(triple_t));
@@ -123,7 +125,7 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
 /// @param sink The sink consuming the output stream
 void execute_query(const query_t *query, source_t *source, sink_t *sink)
 {
-    data_t data = {NULL, 0};
+    data_t data = {NULL, 0, 1};
     while (source->has_next) {
         execute_operator(query->root, source->get_next(source), &data);
         sink->push_next(sink, &data);

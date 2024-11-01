@@ -67,7 +67,7 @@ data_t* get_next_generator(source_t *generator)
 source_t create_generator_source()
 {
     return (source_t) {
-        .buffer = {triples, NUM_TRIPLES},
+        .buffer = {triples, NUM_TRIPLES, 1},
         .has_next = true,
         .get_next = get_next_generator
     };
@@ -89,7 +89,7 @@ void push_next_sink(sink_t *gsink, const data_t *data)
 sink_t create_generator_sink()
 {
     return (sink_t) {
-        .buffer = {malloc(NUM_TRIPLES * sizeof(triple_t)), 0},
+        .buffer = {malloc(NUM_TRIPLES * sizeof(triple_t)), 0, 1},
         .push_next = push_next_sink
     };
 }
