@@ -97,5 +97,7 @@ sink_t create_generator_sink()
 
 void free_generator_sink(const sink_t *sink)
 {
-    free(sink->buffer.data);
+    if (sink->buffer.data) {
+        free(sink->buffer.data);
+    }
 }

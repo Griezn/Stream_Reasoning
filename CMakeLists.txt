@@ -11,6 +11,11 @@ else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
 endif()
 
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
+    add_compile_options(-fsanitize=address)
+    add_link_options(-fsanitize=address)
+endif()
+
 add_subdirectory(tests)
 
 include_directories(include)
@@ -22,6 +27,7 @@ add_library(SR STATIC include/query.h src/query.c
         include/data.h
         include/utils.h
         src/data.c
-        include/defs.h)
+        include/defs.h
+)
 
 enable_testing()

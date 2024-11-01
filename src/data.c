@@ -3,6 +3,8 @@
 //
 #include "data.h"
 
+#include <stdlib.h>
+
 void join_triple_copy(const data_t *src1, const uint8_t index1,
                         const data_t *src2, const uint8_t index2, data_t *dest)
 {
@@ -50,4 +52,11 @@ bool filter_check(const data_t *src, const uint8_t index, const filter_check_t c
             return true;
     }
     return false;
+}
+
+
+void free_data(data_t *data)
+{
+    free(data->data);
+    free(data);
 }
