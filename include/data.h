@@ -7,15 +7,15 @@
 
 #include <stdbool.h>
 
-void join_triple_copy(const data_t *src1, unsigned char index1,
-                    const data_t *src2, unsigned char index2, data_t *dest);
+void join_triple_copy(const data_t *src1, uint8_t index1,
+                    const data_t *src2, uint8_t index2, data_t *dest);
 
-bool join_check(const data_t *src1, unsigned char index1,
-                    const data_t *src2, unsigned char index2, join_check_t check);
+bool join_check(const data_t *src1, uint8_t index1,
+                    const data_t *src2, uint8_t index2, join_check_t check);
 
-void triple_copy(const data_t *src, unsigned char index, data_t *dest);
+void triple_copy(const data_t *src, uint8_t index, data_t *dest);
 
-bool filter_check(const data_t *src, unsigned char index, filter_check_t check);
+bool filter_check(const data_t *src, uint8_t index, filter_check_t check);
 
 
 #endif //DATA_H

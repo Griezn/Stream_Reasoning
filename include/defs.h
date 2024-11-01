@@ -5,17 +5,18 @@
 #ifndef DEFS_H
 #define DEFS_H
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct Triple {
-    unsigned char subject;
-    unsigned char predicate;
-    unsigned char object;
+    uint8_t subject;
+    uint8_t predicate;
+    uint8_t object;
 } triple_t;
 
 typedef struct Data {
     struct Triple *data;
-    unsigned char size;
-    unsigned char width;
+    uint8_t size;
+    uint8_t width;
 } data_t;
 
 enum OPERATORS {
@@ -29,9 +30,9 @@ typedef bool (*join_check_t)(triple_t in1, triple_t in2);
 typedef bool (*filter_check_t)(triple_t in);
 
 typedef union Parameters {
-    join_check_t   join;
-    filter_check_t filter;
-    unsigned char  window;
+    join_check_t    join;
+    filter_check_t  filter;
+    uint8_t         window;
 } parameter_t;
 
 typedef struct Operator {
