@@ -9,12 +9,10 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /WX")
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
-endif()
-
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
     add_compile_options(-fsanitize=address,undefined)
     add_link_options(-fsanitize=address,undefined)
 endif()
+
 
 add_subdirectory(tests)
 
