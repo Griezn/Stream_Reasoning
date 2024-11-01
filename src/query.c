@@ -73,47 +73,39 @@ void window(data_t *in, data_t *out, const parameter_t param)
 /// @param out The output stream
 void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
 {
-    data_t *tmpo1 = in;
-    data_t *tmpo2 = NULL;
+    data_t tmpo1 = *in;
+    data_t tmpo2 = {NULL, 0, 1};
 
     switch (operator_->type) {
         case JOIN:
             assert(operator_->left);
             assert(operator_->right);
-            tmpo1 = malloc(sizeof(data_t));
-            tmpo2 = malloc(sizeof(data_t));
 
-            execute_operator(operator_->left, in, tmpo1);
-            execute_operator(operator_->right, in, tmpo2);
+            execute_operator(operator_->left, in, &tmpo1);
+            execute_operator(operator_->right, in, &tmpo2);
 
-            assert(tmpo1);
-            assert(tmpo2);
-            join(tmpo1, tmpo2, out, operator_->params);
+            join(&tmpo1, &tmpo2, out, operator_->params);
 
-            free_data(tmpo2);
+            free(tmpo2.data);
             break;
         case FILTER:
             if (operator_->left) {
-                tmpo1 = malloc(sizeof(data_t));
-                execute_operator(operator_->left, in, tmpo1);
+                execute_operator(operator_->left, in, &tmpo1);
             }
 
-            assert(tmpo1);
-            filter(tmpo1, out, operator_->params);
+            filter(&tmpo1, out, operator_->params);
             break;
         case WINDOW:
             if (operator_->left) {
-                tmpo1 = malloc(sizeof(data_t));
-                execute_operator(operator_->left, in, tmpo1);
+                execute_operator(operator_->left, in, &tmpo1);
             }
 
-            assert(tmpo1);
-            window(tmpo1, out, operator_->params);
+            window(&tmpo1, out, operator_->params);
             break;
     }
 
-    if (tmpo1 != in) {
-        free_data(tmpo1);
+    if (tmpo1.data != in->data) {
+        free(tmpo1.data);
     }
 }
 
