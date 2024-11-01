@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 
 /// The join operator
@@ -17,7 +18,7 @@
 /// @param param Join parameters containing a function ptr specifying the join condition
 void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t param)
 {
-    const uint8_t size = max(in1->size, in2->size) + (in1->width + in2->width);
+    const uint8_t size = max(in1->size, in2->size) * (in1->width + in2->width);
     out->data = malloc(size * sizeof(triple_t));
     out->size = 0;
     out->width = in1->width + in2->width;
