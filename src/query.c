@@ -89,6 +89,7 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
             assert(tmpo1);
             assert(tmpo2);
             join(tmpo1, tmpo2, out, operator_->params);
+
             free_data(tmpo2);
             break;
         case FILTER:
@@ -111,7 +112,7 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
             break;
     }
 
-    if (tmpo1 != in && tmpo1) {
+    if (tmpo1 != in) {
         free_data(tmpo1);
     }
 }

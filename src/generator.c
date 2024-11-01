@@ -3,6 +3,7 @@
 //
 #include "generator.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 
@@ -95,9 +96,10 @@ sink_t create_generator_sink()
 }
 
 
-void free_generator_sink(const sink_t *sink)
+void free_generator_sink(sink_t *sink)
 {
-    if (sink->buffer.data) {
-        free(sink->buffer.data);
-    }
+    assert(sink->buffer.data);
+
+    free(sink->buffer.data);
+    sink->buffer.data = NULL;
 }

@@ -11,7 +11,7 @@ sink_t create_generator_sink();
 
 void free_generator_source(const source_t *source);
 
-void free_generator_sink(const sink_t *sink);
+void free_generator_sink(sink_t *sink);
 
 #define GENERATOR_SIZE 10
 

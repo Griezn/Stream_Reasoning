@@ -3,6 +3,7 @@
 //
 #include "data.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 void join_triple_copy(const data_t *src1, const uint8_t index1,
@@ -57,6 +58,12 @@ bool filter_check(const data_t *src, const uint8_t index, const filter_check_t c
 
 void free_data(data_t *data)
 {
+    assert(data);
+    assert(data->data);
+
     free(data->data);
+    data->data = NULL;
+
     free(data);
+    data = NULL;
 }
