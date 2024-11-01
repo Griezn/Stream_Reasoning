@@ -50,6 +50,12 @@ jobs:
             c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
+          - os: windows-latest
+            c_compiler: cl
+            build_type: Debug
+          - os: ubuntu-latest
+            c_compiler: gcc
+            build_type: Debug
 
     steps:
     - uses: actions/checkout@v4
