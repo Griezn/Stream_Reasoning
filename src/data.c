@@ -23,15 +23,24 @@ void join_triple_copy(const data_t *src1, const uint8_t index1,
 
 
 bool join_check(const data_t *src1, const uint8_t index1,
-                    const data_t *src2, const uint8_t index2, const join_check_t check)
+                    const data_t *src2, const uint8_t index2, const join_params_t check)
 {
-    for (int i = 0; i < src1->width; ++i) {
-        for (int j = 0; j < src2->width; ++j) {
-            if (check(src1->data[index1 + i], src2->data[index2 + j]))
-                return true;
+    uint8_t checks_passed = 0;
+    for (int k = 0; k < check.size; ++k) {
+        bool match_found = false;
+        // loop over all triple combinations
+        for (int i = 0; i < src1->width && !match_found; ++i) {
+            for (int j = 0; j < src2->width && !match_found; ++j) {
+                if (check.checks[k](src1->data[index1 + i], src2->data[index2 + j])) {
+                    checks_passed++;
+                    match_found = true;
+                }
+            }
         }
+        if (!match_found)
+            return false;
     }
-    return false;
+    return checks_passed == check.size;
 }
 
 
@@ -46,13 +55,21 @@ void triple_copy(const data_t *src, const uint8_t index, data_t *dest)
 }
 
 
-bool filter_check(const data_t *src, const uint8_t index, const filter_check_t check)
+bool filter_check(const data_t *src, const uint8_t index, const filter_params_t check)
 {
-    for (int i = 0; i < src->width; ++i) {
-        if (check(src->data[index + i]))
-            return true;
+    uint8_t checks_passed = 0;
+    for (int k = 0; k < check.size; ++k) {
+        bool triple_found = false;
+        for (int i = 0; i < src->width && !triple_found; ++i) {
+            if (check.checks[k](src->data[index + i])) {
+                checks_passed++;
+                triple_found = true;
+            }
+        }
+        if (!triple_found)
+            return false;
     }
-    return false;
+    return checks_passed == check.size;
 }
 
 

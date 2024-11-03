@@ -29,9 +29,19 @@ typedef bool (*join_check_t)(triple_t in1, triple_t in2);
 
 typedef bool (*filter_check_t)(triple_t in);
 
+typedef struct JoinParams {
+    uint8_t      size;
+    join_check_t *checks;
+} join_params_t;
+
+typedef struct FilterParams {
+    uint8_t size;
+    filter_check_t *checks;
+} filter_params_t;
+
 typedef union Parameters {
-    join_check_t    join;
-    filter_check_t  filter;
+    struct JoinParams    join;
+    struct FilterParams  filter;
     uint8_t         window;
 } parameter_t;
 

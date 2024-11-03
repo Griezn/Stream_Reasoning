@@ -38,11 +38,12 @@ bool check_join(const triple_t in1, const triple_t in2)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_children)
 {
+    join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
         .left = nullptr,
         .right = nullptr,
-        .params = {.join= check_join}
+        .params = {.join = {.size = 1, .checks = conditions}}
     };
     query_t query_join = {.root = &join_op};
 
@@ -52,11 +53,12 @@ TEST_F(QueryTestFixture, test_query_join_death_no_children)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
 {
+    join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
         .left = nullptr,
         .right = &join_op,
-        .params = {.join = check_join}
+        .params = {.join = {.size = 1, .checks = conditions}}
     };
     query_t query_join = {.root = &join_op};
 
@@ -66,11 +68,12 @@ TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
 {
+    join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
         .left = &join_op,
         .right = nullptr,
-        .params = {.join = check_join}
+        .params = {.join = {.size = 1, .checks = conditions}}
     };
     query_t query_join = {.root = &join_op};
 
@@ -86,11 +89,12 @@ bool check_filter(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter)
 {
+    filter_check_t conditions[1] = {check_filter};
     operator_t filter_op = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter}
+        .params = {.filter = {.size = 1, .checks = conditions}}
     };
 
     query_t query_filter = {.root = &filter_op};
@@ -106,7 +110,7 @@ TEST_F(QueryTestFixture, test_query_filter)
         {SUBJECT_GRACE, PREDICATE_HAS_SKILL, OBJECT_MARKETING},
         {SUBJECT_HELEN, PREDICATE_HAS_SKILL, OBJECT_PROJECT_MANAGEMENT},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 5));
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
 }
 
 bool check_filter2(const triple_t in)
@@ -116,18 +120,20 @@ bool check_filter2(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter2)
 {
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter2};
     operator_t filter_op = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter}
+        .params = {.filter = {.size = 1, .checks = conditions1}}
     };
 
     operator_t filter_op2 = {
         .type = FILTER,
         .left = &filter_op,
         .right = nullptr,
-        .params = {.filter = check_filter2}
+        .params = {.filter = {.size = 1, .checks = conditions2}}
     };
 
     query_t query_filter = {.root = &filter_op2};
@@ -213,25 +219,29 @@ bool check_filter3(const triple_t in)
 /// @test Filter to get people who have a skill that is required by a project
 TEST_F(QueryTestFixture, test_query_join)
 {
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter3};
+    join_check_t conditions3[1] = {check_join};
+
     operator_t filter_has_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter}
+        .params = {.filter = {.size = 1, .checks = conditions1}}
     };
 
     operator_t filter_req_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter3}
+        .params = {.filter = {.size = 1, .checks = conditions2}}
     };
 
     operator_t join_op = {
         .type = JOIN,
         .left = &filter_has_skill,
         .right = &filter_req_skill,
-        .params = {.join = check_join}
+        .params = {.join = {.size = 1, .checks = conditions3}}
     };
 
     query_t query = {.root = &join_op};
@@ -280,49 +290,56 @@ bool check_filter5(const triple_t in)
 /// And that are older than 30
 TEST_F(QueryTestFixture, test_query_1)
 {
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter3};
+    join_check_t conditions3[1] = {check_join};
+    filter_check_t conditions4[1] = {check_filter4};
+    join_check_t conditions5[1] = {check_join2};
+    filter_check_t conditions6[1] = {check_filter5};
+
     operator_t filter_has_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter}
+        .params = {.filter = {.size = 1, .checks = conditions1}}
     };
 
     operator_t filter_req_skill = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter3}
+        .params = {.filter = {.size = 1, .checks = conditions2}}
     };
 
     operator_t join_skill = {
         .type = JOIN,
         .left = &filter_has_skill,
         .right = &filter_req_skill,
-        .params = {.join = check_join}
+        .params = {.join = {.size = 1, .checks = conditions3}}
     };
 
     operator_t filter_has_age = {
         .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.filter = check_filter4}
+        .params = {.filter = {.size = 1, .checks = conditions4}}
     };
 
     operator_t join_age = {
         .type = JOIN,
         .left = &filter_has_age,
         .right = &join_skill,
-        .params = {.join = check_join2}
+        .params = {.join = {.size = 1, .checks = conditions5}}
     };
 
     operator_t filter_older = {
         .type = FILTER,
         .left = &join_age,
         .right = nullptr,
-        .params = {.filter = check_filter5}
+        .params = {.filter = {.size = 1, .checks = conditions6}}
     };
 
-    query_t query = {.root = & filter_older};
+    query_t query = {.root = &filter_older};
 
     execute_query(&query, &gsource, &gsink);
 
@@ -336,4 +353,11 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 6));
+}
+
+
+/// @test
+TEST_F(QueryTestFixture, test_query_2)
+{
+
 }
