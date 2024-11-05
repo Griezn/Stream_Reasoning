@@ -19,6 +19,7 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t p
 {
     const uint8_t size = max(in1->size, in2->size) * (in1->width + in2->width);
     out->data = malloc(size * sizeof(triple_t));
+    assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
@@ -39,11 +40,13 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t p
 /// @note The out buffer will likely be larger than the out->size
 void filter(const data_t *in, data_t *out, const parameter_t param)
 {
-    out->data = malloc(in->size * in->width * sizeof(triple_t));
+    const uint8_t size = in->size * in->width;
+    out->data = malloc(size * sizeof(triple_t));
+    assert(out->data);
     out->size = 0;
     out->width = in->width;
 
-    for (uint8_t i = 0; i < in->size*in->width; i += in->width) {
+    for (uint8_t i = 0; i < size; i += in->width) {
         if (filter_check(in, i, param.filter)) {
             triple_copy(in, i, out);
         }
@@ -55,14 +58,16 @@ void filter(const data_t *in, data_t *out, const parameter_t param)
 /// @param in The input stream
 /// @param out A selection of the input stream
 /// @param param The window parameter containing a size of the window
-void window(data_t *in, data_t *out, const parameter_t param)
+void window(const data_t *in, data_t *out, const parameter_t param)
 {
     const uint8_t size = min(in->size, param.window) * in->width;
     out->data = malloc(size  * sizeof(triple_t));
+    assert(out->data);
     out->size = size;
     out->width = in->width;
 
-    in->size = in->size - size;
+    // TODO: FIX LATER
+    //in->size = in->size - size;
     memcpy(out->data, in->data, size * sizeof(triple_t));
 }
 
@@ -71,7 +76,7 @@ void window(data_t *in, data_t *out, const parameter_t param)
 /// @param operator_ The operator to be executed
 /// @param in The input stream
 /// @param out The output stream
-void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
+void execute_operator(const operator_t *operator_, const data_t *in, data_t *out)
 {
     data_t tmpo1 = *in;
     data_t tmpo2 = {NULL, 0, 1};
@@ -87,6 +92,7 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
             join(&tmpo1, &tmpo2, out, operator_->params);
 
             free(tmpo2.data);
+            tmpo2.data = NULL;
             break;
         case FILTER:
             if (operator_->left) {
@@ -106,6 +112,7 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
 
     if (tmpo1.data != in->data) {
         free(tmpo1.data);
+        tmpo1.data = NULL;
     }
 }
 
@@ -117,8 +124,9 @@ void execute_operator(const operator_t *operator_, data_t *in, data_t *out)
 void execute_query(const query_t *query, source_t *source, sink_t *sink)
 {
     data_t data = {NULL, 0, 1};
-    while (source->has_next) {
-        execute_operator(query->root, source->get_next(source), &data);
+    data_t* next_data;
+    while ((next_data = source->get_next(source)) != NULL) {
+        execute_operator(query->root, next_data, &data);
         sink->push_next(sink, &data);
     }
 }

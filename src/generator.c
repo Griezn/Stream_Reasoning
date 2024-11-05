@@ -58,10 +58,12 @@ triple_t triples[] = {
 #define NUM_TRIPLES (sizeof(triples) / sizeof(triples[0]))
 
 
-data_t* get_next_generator(source_t *generator)
-{
+data_t* get_next_generator(source_t *generator) {
+    if (!generator->has_next) {
+        return NULL; // Return NULL if there are no items left
+    }
     generator->has_next = false;
-    return  &generator->buffer;
+    return &generator->buffer; // Return the current buffer
 }
 
 
@@ -83,7 +85,6 @@ void free_generator_source(const source_t *source)
 
 void push_next_sink(sink_t *gsink, const data_t *data)
 {
-    free_generator_sink(gsink);
     gsink->buffer = *data;
 }
 
@@ -91,7 +92,7 @@ void push_next_sink(sink_t *gsink, const data_t *data)
 sink_t create_generator_sink()
 {
     return (sink_t) {
-        .buffer = {malloc(NUM_TRIPLES * sizeof(triple_t)), 0, 1},
+        .buffer = {NULL, 0, 1},
         .push_next = push_next_sink
     };
 }

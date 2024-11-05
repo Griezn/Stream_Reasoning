@@ -1,6 +1,5 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
-#include <gtest/gtest.h>
 
 extern "C" {
 #include "data.h"
