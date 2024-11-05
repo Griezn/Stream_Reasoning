@@ -57,13 +57,15 @@ triple_t triples[] = {
 
 #define NUM_TRIPLES (sizeof(triples) / sizeof(triples[0]))
 
+static bool has_next = true;
 
-data_t* get_next_generator(source_t *generator) {
-    if (!generator->has_next) {
+data_t* get_next_generator(const source_t *generator) {
+    if (!has_next) {
         return NULL; // Return NULL if there are no items left
     }
-    generator->has_next = false;
-    return &generator->buffer; // Return the current buffer
+    has_next = false;
+
+    return (data_t*) &generator->buffer; // Return the current buffer
 }
 
 
@@ -71,7 +73,6 @@ source_t create_generator_source()
 {
     return (source_t) {
         .buffer = {triples, NUM_TRIPLES, 1},
-        .has_next = true,
         .get_next = get_next_generator
     };
 }

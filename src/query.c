@@ -17,7 +17,7 @@
 /// @param param Join parameters containing a function ptr specifying the join condition
 void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t param)
 {
-    const uint8_t size = max(in1->size, in2->size) * (in1->width + in2->width);
+    const uint8_t size = (in1->size * in2->size) * (in1->width + in2->width);
     out->data = malloc(size * sizeof(triple_t));
     assert(out->data);
     out->size = 0;
@@ -121,10 +121,11 @@ void execute_operator(const operator_t *operator_, const data_t *in, data_t *out
 /// @param query The query to be executed
 /// @param source The source creating the input stream
 /// @param sink The sink consuming the output stream
-void execute_query(const query_t *query, source_t *source, sink_t *sink)
+void execute_query(const query_t *query, const source_t *source, sink_t *sink)
 {
     data_t data = {NULL, 0, 1};
     data_t* next_data;
+
     while ((next_data = source->get_next(source)) != NULL) {
         execute_operator(query->root, next_data, &data);
         sink->push_next(sink, &data);

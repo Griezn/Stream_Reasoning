@@ -5,13 +5,11 @@
 #define SOURCE_H
 #include "data.h"
 
-#include <stdbool.h>
 
 // Created a source to enable other sources than generator e.g. network
 typedef struct Source {
     data_t buffer;
-    bool has_next;
-    data_t* (*get_next)(struct Source *self);
+    data_t* (*get_next)(const struct Source *self);
 } source_t;
 
 typedef struct Sink {

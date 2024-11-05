@@ -6,6 +6,6 @@
 #include "source.h"
 #include "defs.h"
 
-void execute_query(const query_t *query, source_t *source, sink_t *sink);
+void execute_query(const query_t *query, const source_t *source, sink_t *sink);
 
 #endif //QUERY_H

@@ -1,7 +1,6 @@
 //
 // Created by Seppe Degryse on 31/10/2024.
 //
-
 #ifndef DEFS_H
 #define DEFS_H
 #include <stdbool.h>

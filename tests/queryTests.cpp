@@ -155,6 +155,48 @@ TEST_F(QueryTestFixture, test_query_filter2)
 }
 
 
+bool check_filter7(const triple_t in)
+{
+    return in.subject == SUBJECT_ALICE;
+}
+
+
+TEST_F(QueryTestFixture, test_query_filter3)
+{
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter2};
+    filter_check_t conditions3[1] = {check_filter7};
+    operator_t filter_op = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions1}}
+    };
+
+    operator_t filter_op2 = {
+        .type = FILTER,
+        .left = &filter_op,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions2}}
+    };
+
+    operator_t filter_op3 = {
+        .type = FILTER,
+        .left = &filter_op2,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions3}}
+    };
+
+    query_t query_filter = {.root = &filter_op3};
+
+    execute_query(&query_filter, &gsource, &gsink);
+    triple_t expected[1] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 1));
+}
+
+
 TEST_F(QueryTestFixture, test_query_window)
 {
     operator_t window_op = {
