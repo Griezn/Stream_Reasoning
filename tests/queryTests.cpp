@@ -16,6 +16,7 @@ class QueryTestFixture : public ::testing::Test {
 protected:
     source_t gsource = {};
     sink_t gsink = {};
+    bool skip_teardown = false;
 
     void SetUp() override
     {
@@ -25,6 +26,8 @@ protected:
 
     void TearDown() override
     {
+        if (skip_teardown)
+            return;
         free_generator_source(&gsource);
         free_generator_sink(&gsink);
     }
@@ -38,6 +41,7 @@ bool check_join(const triple_t in1, const triple_t in2)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_children)
 {
+    skip_teardown = true;
     join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
@@ -53,6 +57,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_children)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
 {
+    skip_teardown = true;
     join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
@@ -68,6 +73,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
 
 TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
 {
+    skip_teardown = true;
     join_check_t conditions[1] = {check_join};
     operator_t join_op = {
         .type = JOIN,
@@ -353,11 +359,4 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 6));
-}
-
-
-/// @test
-TEST_F(QueryTestFixture, test_query_2)
-{
-
 }
