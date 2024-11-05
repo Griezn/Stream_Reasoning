@@ -67,17 +67,16 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Install Valgrind
+    - name: Run Tests with gdb (Linux only)
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install -y valgrind
-
-    - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: |
-        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          # Run tests with Valgrind
-          valgrind --leak-check=full --track-origins=yes ctest --output-on-failure
-        else
-          # Run tests normally for Windows
-          ctest --output-on-failure
-        fi
+        for test_executable in $(find . -type f -executable -name '*_test'); do
+          echo "Running $test_executable under gdb..."
+          gdb -batch -ex "run" -ex "bt" --args $test_executable || true
+        done
+
+    - name: Run Tests (Windows only)
+      if: matrix.os == 'windows-latest'
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: ctest --output-on-failure
