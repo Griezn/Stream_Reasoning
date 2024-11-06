@@ -6,8 +6,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-void join_triple_copy(const data_t *src1, const uint8_t index1,
-                        const data_t *src2, const uint8_t index2, data_t *dest)
+void join_triple_copy(const data_t *src1, const uint32_t index1,
+                        const data_t *src2, const uint32_t index2, data_t *dest)
 {
     int index = dest->size * dest->width;
     for (int i = 0; i < src1->width; ++i) {
@@ -22,8 +22,8 @@ void join_triple_copy(const data_t *src1, const uint8_t index1,
 }
 
 
-bool join_check(const data_t *src1, const uint8_t index1,
-                    const data_t *src2, const uint8_t index2, const join_params_t check)
+bool join_check(const data_t *src1, const uint32_t index1,
+                    const data_t *src2, const uint32_t index2, const join_params_t check)
 {
     uint8_t checks_passed = 0;
     for (int k = 0; k < check.size; ++k) {
@@ -44,7 +44,7 @@ bool join_check(const data_t *src1, const uint8_t index1,
 }
 
 
-void triple_copy(const data_t *src, const uint8_t index, data_t *dest)
+void triple_copy(const data_t *src, const uint32_t index, data_t *dest)
 {
     int dest_index = dest->size * dest->width;
     for (int i = 0; i < src->width; ++i) {
@@ -55,7 +55,7 @@ void triple_copy(const data_t *src, const uint8_t index, data_t *dest)
 }
 
 
-bool filter_check(const data_t *src, const uint8_t index, const filter_params_t check)
+bool filter_check(const data_t *src, const uint32_t index, const filter_params_t check)
 {
     uint8_t checks_passed = 0;
     for (int k = 0; k < check.size; ++k) {

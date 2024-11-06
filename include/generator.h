@@ -5,11 +5,18 @@
 #define GENERATOR_H
 #include "source.h"
 
-source_t create_generator_source();
+#include <stdbool.h>
 
-sink_t create_generator_sink();
+typedef struct GeneratorSource {
+    source_t source;
+    bool has_next;
+} generator_source_t;
 
-void free_generator_source(const source_t *source);
+source_t *create_generator_source();
+
+sink_t *create_generator_sink();
+
+void free_generator_source(source_t *source);
 
 void free_generator_sink(sink_t *sink);
 

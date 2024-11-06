@@ -14,8 +14,8 @@ extern "C" {
 
 class QueryTestFixture : public ::testing::Test {
 protected:
-    source_t gsource = {};
-    sink_t gsink = {};
+    source_t *gsource = nullptr;
+    sink_t *gsink = nullptr;
     bool skip_teardown = false;
 
     void SetUp() override
@@ -28,8 +28,8 @@ protected:
     {
         if (skip_teardown)
             return;
-        free_generator_source(&gsource);
-        free_generator_sink(&gsink);
+        free_generator_source(gsource);
+        free_generator_sink(gsink);
     }
 };
 
@@ -52,7 +52,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_children)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .left and .right are NULL
-    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
 }
 
 TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
@@ -68,7 +68,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .left is NULL
-    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
 }
 
 TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
@@ -84,7 +84,7 @@ TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
     query_t query_join = {.root = &join_op};
 
     // Program should abort because .right is NULL
-    ASSERT_DEATH(execute_query(&query_join, &gsource, &gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
 }
 
 
@@ -105,7 +105,7 @@ TEST_F(QueryTestFixture, test_query_filter)
 
     query_t query_filter = {.root = &filter_op};
 
-    execute_query(&query_filter, &gsource, &gsink);
+    execute_query(&query_filter, gsource, gsink);
     triple_t expected[8] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
@@ -116,7 +116,7 @@ TEST_F(QueryTestFixture, test_query_filter)
         {SUBJECT_GRACE, PREDICATE_HAS_SKILL, OBJECT_MARKETING},
         {SUBJECT_HELEN, PREDICATE_HAS_SKILL, OBJECT_PROJECT_MANAGEMENT},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 8));
 }
 
 bool check_filter2(const triple_t in)
@@ -144,14 +144,14 @@ TEST_F(QueryTestFixture, test_query_filter2)
 
     query_t query_filter = {.root = &filter_op2};
 
-    execute_query(&query_filter, &gsource, &gsink);
+    execute_query(&query_filter, gsource, gsink);
     triple_t expected[4] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING}
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 4));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 4));
 }
 
 
@@ -189,11 +189,11 @@ TEST_F(QueryTestFixture, test_query_filter3)
 
     query_t query_filter = {.root = &filter_op3};
 
-    execute_query(&query_filter, &gsource, &gsink);
+    execute_query(&query_filter, gsource, gsink);
     triple_t expected[1] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 1));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 1));
 }
 
 
@@ -208,7 +208,7 @@ TEST_F(QueryTestFixture, test_query_window)
 
     query_t query_window = {.root = &window_op};
 
-    execute_query(&query_window, &gsource, &gsink);
+    execute_query(&query_window, gsource, gsink);
     triple_t expected[8] = {
         {SUBJECT_ALICE, PREDICATE_HAS_NAME, OBJECT_ALICE},
         {SUBJECT_ALICE, PREDICATE_HAS_AGE, 30},
@@ -220,7 +220,7 @@ TEST_F(QueryTestFixture, test_query_window)
         {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
         {SUBJECT_BOB, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 8));
 }
 
 
@@ -242,7 +242,7 @@ TEST_F(QueryTestFixture, test_query_window2)
 
     query_t query_window = {.root = &window_op};
 
-    execute_query(&query_window, &gsource, &gsink);
+    execute_query(&query_window, gsource, gsink);
     triple_t expected[8] = {
         {SUBJECT_ALICE, PREDICATE_HAS_NAME, OBJECT_ALICE},
         {SUBJECT_ALICE, PREDICATE_HAS_AGE, 30},
@@ -254,7 +254,7 @@ TEST_F(QueryTestFixture, test_query_window2)
         {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
         {SUBJECT_BOB, PREDICATE_WORKS_ON, SUBJECT_PROJECT2},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 8));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 8));
 }
 
 
@@ -294,7 +294,7 @@ TEST_F(QueryTestFixture, test_query_join)
 
     query_t query = {.root = &join_op};
 
-    execute_query(&query, &gsource, &gsink);
+    execute_query(&query, gsource, gsink);
 
     triple_t expected[10] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
@@ -312,7 +312,7 @@ TEST_F(QueryTestFixture, test_query_join)
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 10));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
 }
 
 
@@ -389,7 +389,7 @@ TEST_F(QueryTestFixture, test_query_1)
 
     query_t query = {.root = &filter_older};
 
-    execute_query(&query, &gsource, &gsink);
+    execute_query(&query, gsource, gsink);
 
     triple_t expected[6] = {
         {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},
@@ -400,5 +400,5 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
-    ASSERT_TRUE(ARR_EQ(gsink.buffer.data, expected, 6));
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 6));
 }

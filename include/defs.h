@@ -7,14 +7,14 @@
 #include <stdint.h>
 
 typedef struct Triple {
-    uint8_t subject;
-    uint8_t predicate;
-    uint8_t object;
+    uint32_t subject;
+    uint32_t predicate;
+    uint32_t object;
 } triple_t;
 
 typedef struct Data {
     struct Triple *data;
-    uint8_t size;
+    uint32_t size;
     uint8_t width;
 } data_t;
 
@@ -41,7 +41,7 @@ typedef struct FilterParams {
 typedef union Parameters {
     struct JoinParams    join;
     struct FilterParams  filter;
-    uint8_t         window;
+    uint32_t         window;
 } parameter_t;
 
 typedef struct Operator {

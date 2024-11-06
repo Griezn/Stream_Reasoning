@@ -17,14 +17,14 @@
 /// @param param Join parameters containing a function ptr specifying the join condition
 void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t param)
 {
-    const uint8_t size = (in1->size * in2->size) * (in1->width + in2->width);
+    const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
     out->data = malloc(size * sizeof(triple_t));
     assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
-    for (uint8_t i = 0; i < in1->size*in2->width; i += in1->width) {
-        for (uint8_t j = 0; j < in2->size * in2->width; j += in2->width) {
+    for (uint32_t i = 0; i < in1->size*in2->width; i += in1->width) {
+        for (uint32_t j = 0; j < in2->size * in2->width; j += in2->width) {
             if (join_check(in1, i, in2, j, param.join)) {
                 join_triple_copy(in1, i, in2, j, out);
             }
@@ -40,13 +40,13 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const parameter_t p
 /// @note The out buffer will likely be larger than the out->size
 void filter(const data_t *in, data_t *out, const parameter_t param)
 {
-    const uint8_t size = in->size * in->width;
+    const uint32_t size = in->size * in->width;
     out->data = malloc(size * sizeof(triple_t));
     assert(out->data);
     out->size = 0;
     out->width = in->width;
 
-    for (uint8_t i = 0; i < size; i += in->width) {
+    for (uint32_t i = 0; i < size; i += in->width) {
         if (filter_check(in, i, param.filter)) {
             triple_copy(in, i, out);
         }
@@ -60,7 +60,7 @@ void filter(const data_t *in, data_t *out, const parameter_t param)
 /// @param param The window parameter containing a size of the window
 void window(const data_t *in, data_t *out, const parameter_t param)
 {
-    const uint8_t size = min(in->size, param.window) * in->width;
+    const uint32_t size = min(in->size, param.window) * in->width;
     out->data = malloc(size  * sizeof(triple_t));
     assert(out->data);
     out->size = size;
@@ -129,5 +129,7 @@ void execute_query(const query_t *query, const source_t *source, sink_t *sink)
     while ((next_data = source->get_next(source)) != NULL) {
         execute_operator(query->root, next_data, &data);
         sink->push_next(sink, &data);
+        //free(next_data);
+        //next_data = NULL;
     }
 }
