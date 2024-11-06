@@ -12,6 +12,7 @@ else()
 endif()
 
 add_subdirectory(tests)
+add_subdirectory(benchmark)
 
 include_directories(include)
 
