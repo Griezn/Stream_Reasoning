@@ -3,11 +3,14 @@
 //
 #include <gtest/gtest.h>
 
+#include "test_utils.hpp"
+
 
 extern "C" {
     #include "data.h"
     #include "defs.h"
     #include "generator.h"
+    #include "file_source.h"
 }
 
 
@@ -138,4 +141,24 @@ TEST(DataTests, test_filter_check)
     ASSERT_FALSE(filter_check(&in, 3, checks));
     ASSERT_TRUE(filter_check(&in, 6, checks));
     ASSERT_TRUE(filter_check(&in, 9, checks));
+}
+
+
+TEST(DataTests, test_file_source)
+{
+    source_t *gsource = create_generator_source();
+    source_t *fsource = create_file_source("../../tests/triples.bin");
+
+    sink_t *gsink = create_generator_sink();
+    sink_t *fsink = create_generator_sink();
+
+    gsink->push_next(gsink, gsource->get_next(gsource));
+    fsink->push_next(fsink, fsource->get_next(fsource));
+
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, fsink->buffer.data, gsink->buffer.size));
+
+    free_generator_source(gsource);
+    free_file_source(fsource);
+    free(gsink); // not the normal because it is still the array allocated int he lib
+    free(fsink); // not the normal because buffer is freed in source
 }
