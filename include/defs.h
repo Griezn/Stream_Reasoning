@@ -22,6 +22,7 @@ enum OPERATORS {
     JOIN,
     FILTER,
     WINDOW,
+    SELECT
 };
 
 typedef bool (*join_check_t)(triple_t in1, triple_t in2);
@@ -38,10 +39,16 @@ typedef struct FilterParams {
     filter_check_t *checks;
 } filter_params_t;
 
+typedef struct SelectParams {
+    uint8_t size;
+    uint8_t *colums;
+} select_params_t;
+
 typedef union Parameters {
     struct JoinParams    join;
     struct FilterParams  filter;
-    uint32_t         window;
+    struct SelectParams  select;
+    uint32_t             window;
 } parameter_t;
 
 typedef struct Operator {

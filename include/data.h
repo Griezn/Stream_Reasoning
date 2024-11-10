@@ -17,6 +17,8 @@ void triple_copy(const data_t *src, uint32_t index, data_t *dest);
 
 bool filter_check(const data_t *src, uint32_t index, filter_params_t check);
 
+bool select_check(const data_t *src, uint32_t index, select_params_t param);
+
 void free_data(data_t *data);
 
 #endif //DATA_H

@@ -63,12 +63,31 @@ void window(const data_t *in, data_t *out, const parameter_t param)
     const uint32_t size = min(in->size, param.window) * in->width;
     out->data = malloc(size  * sizeof(triple_t));
     assert(out->data);
-    out->size = size;
+    out->size = in->size;
     out->width = in->width;
 
     // TODO: FIX LATER
     //in->size = in->size - size;
     memcpy(out->data, in->data, size * sizeof(triple_t));
+}
+
+
+/// Performs a column selection on a stream
+/// @param in The input stream
+/// @param out The input stream with only the triples having one of the specified predicates
+/// @param param The select parameter containing an array with the wanted predicates
+void select(const data_t *in, data_t *out, const parameter_t param)
+{
+    const uint32_t size = in->size * param.select.size;
+    out->data = malloc(size * sizeof(triple_t));
+    out->size = in->size;
+    out->width = param.select.size;
+    uint32_t out_idx = 0;
+
+    for (uint32_t i = 0; i < in->size * in->width; ++i) {
+        if (select_check(in, i, param.select))
+            out->data[out_idx++] = in->data[i];
+    }
 }
 
 
@@ -108,6 +127,12 @@ void execute_operator(const operator_t *operator_, const data_t *in, data_t *out
 
             window(&tmpo1, out, operator_->params);
             break;
+        case SELECT:
+            if (operator_->left)
+                execute_operator(operator_->left, in, &tmpo1);
+
+            select(&tmpo1, out, operator_->params);
+            break;
     }
 
     if (tmpo1.data != in->data) {
@@ -129,7 +154,5 @@ void execute_query(const query_t *query, const source_t *source, sink_t *sink)
     while ((next_data = source->get_next(source)) != NULL) {
         execute_operator(query->root, next_data, &data);
         sink->push_next(sink, &data);
-        //free(next_data);
-        //next_data = NULL;
     }
 }

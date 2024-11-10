@@ -73,6 +73,16 @@ bool filter_check(const data_t *src, const uint32_t index, const filter_params_t
 }
 
 
+bool select_check(const data_t *src, const uint32_t index, const select_params_t param)
+{
+    for (int i = 0; i < param.size; ++i) {
+        if (src->data[index].predicate == param.colums[i])
+            return true;
+    }
+    return false;
+}
+
+
 void free_data(data_t *data)
 {
     assert(data);
