@@ -76,7 +76,7 @@ void window(const data_t *in, data_t *out, const parameter_t param)
 /// @param in The input stream
 /// @param out The input stream with only the triples having one of the specified predicates
 /// @param param The select parameter containing an array with the wanted predicates
-void select(const data_t *in, data_t *out, const parameter_t param)
+void select_query(const data_t *in, data_t *out, const parameter_t param)
 {
     const uint32_t size = in->size * param.select.size;
     out->data = malloc(size * sizeof(triple_t));
@@ -131,7 +131,7 @@ void execute_operator(const operator_t *operator_, const data_t *in, data_t *out
             if (operator_->left)
                 execute_operator(operator_->left, in, &tmpo1);
 
-            select(&tmpo1, out, operator_->params);
+            select_query(&tmpo1, out, operator_->params);
             break;
     }
 
