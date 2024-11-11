@@ -147,7 +147,7 @@ TEST(DataTests, test_filter_check)
 TEST(DataTests, test_file_source)
 {
     source_t *gsource = create_generator_source();
-    source_t *fsource = create_file_source("../../tests/triples.bin");
+    source_t *fsource = create_file_source("../../tests/triples.bin" ,1);
 
     sink_t *gsink = create_generator_sink();
     sink_t *fsink = create_generator_sink();
