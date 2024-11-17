@@ -153,10 +153,12 @@ void execute_operator(const operator_t *operator_, const data_t *in, data_t *out
 void execute_query(const query_t *query, const source_t *source, sink_t *sink)
 {
     data_t data = {NULL, 0, 1};
-    data_t* next_data;
+    data_t* next_data = NULL;
 
     while ((next_data = source->get_next(source)) != NULL) {
         execute_operator(query->root, next_data, &data);
         sink->push_next(sink, &data);
+        free(next_data);
+        next_data = NULL;
     }
 }

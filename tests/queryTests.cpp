@@ -28,8 +28,12 @@ protected:
 
     void TearDown() override
     {
-        if (skip_teardown)
+        if (skip_teardown) {
+            free(gsource);
+            free(gsink);
             return;
+        }
+
         free_generator_source(gsource);
         free_generator_sink(gsink);
     }

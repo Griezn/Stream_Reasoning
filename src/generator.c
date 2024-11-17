@@ -64,7 +64,10 @@ data_t* get_next_generator(const source_t *source) {
     }
     generator->has_next = false;
 
-    return &generator->source.buffer;
+    data_t *data = malloc(sizeof(data_t));
+    *data = generator->source.buffer;;
+
+    return data;
 }
 
 
