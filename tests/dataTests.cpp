@@ -173,16 +173,23 @@ TEST(DataTests, test_file_source_inc)
     sink_t *gsink = create_generator_sink();
     sink_t *fsink = create_generator_sink();
 
-    gsink->push_next(gsink, gsource->get_next(gsource));
-    fsink->push_next(fsink, fsource->get_next(fsource));
+    data_t *next_gdata = gsource->get_next(gsource);
+    data_t *next_fdata = fsource->get_next(fsource);
+
+    gsink->push_next(gsink, next_gdata);
+    fsink->push_next(fsink, next_fdata);
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, fsink->buffer.data, increment));
 
-    fsink->push_next(fsink, fsource->get_next(fsource));
+    free(next_fdata);
+    next_fdata = fsource->get_next(fsource);
+    fsink->push_next(fsink, next_fdata);
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data + increment, fsink->buffer.data, increment));
 
-    fsink->push_next(fsink, fsource->get_next(fsource));
+    free(next_fdata);
+    next_fdata = fsource->get_next(fsource);
+    fsink->push_next(fsink, next_fdata);
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data + 2*increment, fsink->buffer.data, increment));
 
