@@ -8,7 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
 
 add_subdirectory(tests)
-add_subdirectory(benchmark)
+
+# Option to build benchmarks
+option(BUILD_BENCHMARKS "Enable building benchmarks" OFF)
+
+if (BUILD_BENCHMARKS)
+    add_subdirectory(benchmark)
+endif()
 
 include_directories(include)
 
