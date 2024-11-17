@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "generator.h"
+#include "utils.h"
 
 
 data_t *get_next_file(const source_t *source)
@@ -23,8 +24,8 @@ data_t *get_next_file(const source_t *source)
     data_t *data = malloc(sizeof(data_t));
     assert(data);
     data->data = fs->source.buffer.data + (fs->index * fs->source.buffer.width);
-    data->size = fs->inc;
-    data->width = data->width;
+    data->size = min(fs->inc, fs->source.buffer.size - fs->index);
+    data->width = source->buffer.width;
 
     fs->index += fs->inc;
 
@@ -56,7 +57,7 @@ source_t *create_file_source(const char *filename, uint8_t width, uint32_t inc)
         return NULL;
     }
     fs->source.buffer.data = triples;
-    fs->source.buffer.size = sb.st_size / sizeof(triple_t);
+    fs->source.buffer.size = sb.st_size / (sizeof(triple_t) * width);
     fs->source.buffer.width = width;
     fs->source.get_next = get_next_file;
     fs->index = 0;

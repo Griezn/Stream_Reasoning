@@ -84,9 +84,13 @@ void select_query(const data_t *in, data_t *out, const parameter_t param)
     out->width = param.select.size;
     uint32_t out_idx = 0;
 
-    for (uint32_t i = 0; i < in->size * in->width; ++i) {
-        if (select_check(in, i, param.select))
-            out->data[out_idx++] = in->data[i];
+    for (uint32_t i = 0; i < in->size; ++i) {
+        for (uint32_t j = 0; j < in->width; ++j) {
+            if (select_check(in, i * in->width + j, param.select)) {
+                out->data[out_idx++] = in->data[i * in->width + j];
+                break;
+            }
+        }
     }
 }
 
