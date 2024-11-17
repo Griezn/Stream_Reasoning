@@ -147,7 +147,7 @@ TEST(DataTests, test_filter_check)
 TEST(DataTests, test_file_source)
 {
     source_t *gsource = create_generator_source();
-    source_t *fsource = create_file_source("../../tests/triples.bin" ,1);
+    source_t *fsource = create_file_source("../../tests/triples.bin" ,1, 255);
 
     sink_t *gsink = create_generator_sink();
     sink_t *fsink = create_generator_sink();
@@ -156,6 +156,35 @@ TEST(DataTests, test_file_source)
     fsink->push_next(fsink, fsource->get_next(fsource));
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, fsink->buffer.data, gsink->buffer.size));
+
+    free_generator_source(gsource);
+    free_file_source(fsource);
+    free(gsink); // not the normal because it is still the array allocated int he lib
+    free(fsink); // not the normal because buffer is freed in source
+}
+
+
+TEST(DataTests, test_file_source_inc)
+{
+    constexpr uint32_t increment = 12;
+    source_t *gsource = create_generator_source();
+    source_t *fsource = create_file_source("../../tests/triples.bin" ,1, increment);
+
+    sink_t *gsink = create_generator_sink();
+    sink_t *fsink = create_generator_sink();
+
+    gsink->push_next(gsink, gsource->get_next(gsource));
+    fsink->push_next(fsink, fsource->get_next(fsource));
+
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, fsink->buffer.data, increment));
+
+    fsink->push_next(fsink, fsource->get_next(fsource));
+
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data + increment, fsink->buffer.data, increment));
+
+    fsink->push_next(fsink, fsource->get_next(fsource));
+
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data + 2*increment, fsink->buffer.data, increment));
 
     free_generator_source(gsource);
     free_file_source(fsource);

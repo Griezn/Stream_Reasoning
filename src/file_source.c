@@ -12,7 +12,6 @@
 
 #include "generator.h"
 
-#define INCREMENT 255
 
 data_t *get_next_file(const source_t *source)
 {
@@ -24,16 +23,16 @@ data_t *get_next_file(const source_t *source)
     data_t *data = malloc(sizeof(data_t));
     assert(data);
     data->data = fs->source.buffer.data + (fs->index * fs->source.buffer.width);
-    data->size = fs->source.buffer.size - fs->index;
+    data->size = fs->inc;
     data->width = data->width;
 
-    fs->index += INCREMENT;
+    fs->index += fs->inc;
 
     return data;
 }
 
 
-source_t *create_file_source(const char *filename, uint8_t width)
+source_t *create_file_source(const char *filename, uint8_t width, uint32_t inc)
 {
     file_source_t *fs = malloc(sizeof(file_source_t));
 
@@ -61,12 +60,16 @@ source_t *create_file_source(const char *filename, uint8_t width)
     fs->source.buffer.width = width;
     fs->source.get_next = get_next_file;
     fs->index = 0;
+    fs->inc = inc;
 
     return  (source_t*) fs;
 }
 
 void push_next_fsink(sink_t *sink, const data_t *data)
 {
+    if (sink->buffer.data)
+        free(sink->buffer.data);
+
     sink->buffer = *data;
 }
 
