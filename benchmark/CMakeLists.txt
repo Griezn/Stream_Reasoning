@@ -13,6 +13,7 @@ include_directories(../include)
 add_executable(
         SR_BENCH
         QueryBenchmarks.cpp
+        traffic_data.hpp
 )
 
-target_link_libraries(SR_BENCH benchmark::benchmark benchmark::benchmark_main)
+target_link_libraries(SR_BENCH SR benchmark::benchmark benchmark::benchmark_main)
