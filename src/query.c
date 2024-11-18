@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 
 /// The join operator
@@ -95,6 +96,14 @@ void select_query(const data_t *in, data_t *out, const parameter_t param)
 }
 
 
+void execute_operator(const operator_t *operator_, const data_t *in, data_t *out);
+void *execute_operator_thread(void *arg) {
+    const operator_thread_arg_t *targ = arg;
+    execute_operator(targ->operator_, targ->in, targ->out);
+    return NULL;
+}
+
+
 /// This function executed the right operator
 /// @param operator_ The operator to be executed
 /// @param in The input stream
@@ -109,8 +118,20 @@ void execute_operator(const operator_t *operator_, const data_t *in, data_t *out
             assert(operator_->left);
             assert(operator_->right);
 
-            execute_operator(operator_->left, in, &tmpo1);
-            execute_operator(operator_->right, in, &tmpo2);
+            // Thread arguments
+            operator_thread_arg_t left_arg = {operator_->left, in, &tmpo1};
+            operator_thread_arg_t right_arg = {operator_->right, in, &tmpo2};
+
+            // Threads
+            pthread_t left_thread, right_thread;
+
+            // Execute left and right operators in parallel
+            pthread_create(&left_thread, NULL, execute_operator_thread, &left_arg);
+            pthread_create(&right_thread, NULL, execute_operator_thread, &right_arg);
+
+            // Wait for threads to finish
+            pthread_join(left_thread, NULL);
+            pthread_join(right_thread, NULL);
 
             join(&tmpo1, &tmpo2, out, operator_->params);
 
