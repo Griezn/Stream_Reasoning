@@ -33,7 +33,7 @@ data_t *get_next_file(const source_t *source)
 }
 
 
-source_t *create_file_source(const char *filename, uint8_t width, uint32_t inc)
+source_t *create_file_source(const char *filename, uint8_t wsize, uint32_t wstep)
 {
     file_source_t *fs = malloc(sizeof(file_source_t));
 
@@ -57,11 +57,13 @@ source_t *create_file_source(const char *filename, uint8_t width, uint32_t inc)
         return NULL;
     }
     fs->source.buffer.data = triples;
-    fs->source.buffer.size = sb.st_size / (sizeof(triple_t) * width);
-    fs->source.buffer.width = width;
+    fs->source.buffer.size = sb.st_size / sizeof(triple_t);
+    fs->source.buffer.width = 1;
     fs->source.get_next = get_next_file;
     fs->index = 0;
-    fs->inc = inc;
+    fs->inc = wstep;
+
+    (void) wsize;
 
     return  (source_t*) fs;
 }

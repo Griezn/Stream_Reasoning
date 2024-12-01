@@ -13,7 +13,7 @@ typedef struct FileSource {
     uint32_t inc;
 } file_source_t;
 
-source_t *create_file_source(const char *filename, uint8_t width, uint32_t inc);
+source_t *create_file_source(const char *filename, uint8_t wsize, uint32_t wstep);
 
 sink_t *create_file_sink();
 
