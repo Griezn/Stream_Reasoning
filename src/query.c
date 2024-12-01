@@ -79,7 +79,7 @@ void window(const data_t *in, data_t *out, const parameter_t param)
 /// @param param The select parameter containing an array with the wanted predicates
 void select_query(const data_t *in, data_t *out, const parameter_t param)
 {
-    const uint32_t size = in->size * param.select.size;
+    const uint32_t size = in->size * (in->width / param.select.size);
     out->data = malloc(size * sizeof(triple_t));
     out->size = in->size;
     out->width = param.select.size;
