@@ -4,13 +4,14 @@
 #include <gtest/gtest.h>
 
 #include "test_utils.hpp"
-#include "../benchmark/traffic_data.hpp"
+#include "../benchmark/data/traffic_data.hpp"
 
 extern "C" {
     #include "query.h"
     #include "source.h"
     #include "generator.h"
     #include "file_source.h"
+    #include "mutli_source.h"
 }
 
 
@@ -461,52 +462,4 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 6));
-}
-
-bool check_join3(const triple_t in1, const triple_t in2)
-{
-    return in1.subject == in2.subject;
-}
-
-TEST_F(QueryTestFixture, test_query_select_join_file)
-{
-    skip_teardown = true;
-    uint8_t predicates[1] = {SOSA_OBSERVATION};
-    uint8_t predicates2[1] = {SOSA_HAS_SIMPLE_RESULT};
-    join_check_t conditions3[1] = {check_join3};
-
-    operator_t select_obs = {
-        .type = SELECT,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.select = {.size = 1, .colums = predicates}}
-    };
-
-    operator_t select_simple_result = {
-        .type = SELECT,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.select = {.size = 1, .colums = predicates2}}
-    };
-
-    operator_t join_obs = {
-        .type = JOIN,
-        .left = &select_obs,
-        .right = &select_simple_result,
-        .params = {.join = {.size = 1, .checks = conditions3}}
-    };
-
-
-    const query_t query = {.root = &join_obs};
-
-    // Create generator source and sink
-    source_t *source = create_file_source("../../benchmark/traffic_triples1.bin", 5, 255);
-    sink_t *sink = create_file_sink();
-
-    // Benchmark loop
-    execute_query(&query, source, sink);
-
-    // Clean up
-    free_file_source(source);
-    free_file_sink(sink);
 }

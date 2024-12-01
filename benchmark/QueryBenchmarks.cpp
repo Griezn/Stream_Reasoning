@@ -4,7 +4,7 @@
 #include <benchmark/benchmark.h>
 
 
-#include "traffic_data.hpp"
+#include "data/traffic_data.hpp"
 
 extern "C" {
     #include "defs.h"
@@ -152,7 +152,7 @@ static void BM_traffic_select_join(benchmark::State& state)
     query_t query = {.root = &join_obs};
 
     // Create generator source and sink
-    source_t *source = create_file_source("../../benchmark/traffic_triples1.bin", 4, 255);
+    source_t *source = create_file_source("../../benchmark/data/traffic_triples1.bin", 1, 255);
     sink_t *sink = create_file_sink();
 
     // Benchmark loop
