@@ -43,6 +43,21 @@ bool natural_join(const triple_t in1, const triple_t in2)
     return in1.subject == in2.subject;
 }
 
+bool filter_obs_prop(const triple_t in)
+{
+    return in.predicate == SOSA_OBSERVED_PROPERTY;
+}
+
+bool filter_has_value(const triple_t in)
+{
+    return in.predicate == SOSA_HAS_SIMPLE_RESULT;
+}
+
+bool filter_obs_id(const triple_t in)
+{
+    return in.predicate == SOSA_MADE_BY_SENSOR;
+}
+
 static void query1(benchmark::State& state)
 {
     source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 1, 255);
@@ -53,28 +68,28 @@ static void query1(benchmark::State& state)
     multi_source_add(msource, source1);
     multi_source_add(msource, source2);
 
-    uint8_t obs_prop[1] = {SOSA_OBSERVED_PROPERTY};
+    filter_check_t obs_prop[1] = {filter_obs_prop};
     operator_t select_obs_prop = {
-        .type = SELECT,
+        .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.select = {.size = 1, .colums = obs_prop}}
+        .params = {.filter = {.size = 1, .checks = obs_prop}}
     };
 
-    uint8_t has_value[1] = {SOSA_HAS_SIMPLE_RESULT};
+    filter_check_t has_value[1] = {filter_has_value};
     operator_t select_has_value = {
-        .type = SELECT,
+        .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.select = {.size = 1, .colums = has_value}}
+        .params = {.filter = {.size = 1, .checks = has_value}}
     };
 
-    uint8_t obs_id[1] = {SOSA_MADE_BY_SENSOR};
+    filter_check_t obs_id[1] = {filter_obs_id};
     operator_t select_obs_id = {
-        .type = SELECT,
+        .type = FILTER,
         .left = nullptr,
         .right = nullptr,
-        .params = {.select = {.size = 1, .colums = obs_id}}
+        .params = {.filter = {.size = 1, .checks = obs_id}}
     };
 
     join_check_t cond[1] = {natural_join};
