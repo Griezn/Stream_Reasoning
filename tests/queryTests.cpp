@@ -4,14 +4,11 @@
 #include <gtest/gtest.h>
 
 #include "test_utils.hpp"
-#include "../benchmark/data/traffic_data.hpp"
 
 extern "C" {
     #include "query.h"
     #include "source.h"
     #include "generator.h"
-    #include "file_source.h"
-    #include "mutli_source.h"
 }
 
 
@@ -374,6 +371,65 @@ TEST_F(QueryTestFixture, test_query_select)
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 5));
+}
+
+
+TEST_F(QueryTestFixture, test_query_select2)
+{
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter3};
+    join_check_t conditions3[1] = {check_join};
+    uint8_t predicates[2] = {PREDICATE_HAS_SKILL, PREDICATE_REQUIRES_SKILL};
+
+    operator_t filter_has_skill = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions1}}
+    };
+
+    operator_t filter_req_skill = {
+        .type = FILTER,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions2}}
+    };
+
+    operator_t join_op = {
+        .type = JOIN,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
+        .params = {.join = {.size = 1, .checks = conditions3}}
+    };
+
+    operator_t select_op = {
+        .type = SELECT,
+        .left = &join_op,
+        .right = nullptr,
+        .params = {.select = {.size = 2, .colums = predicates}}
+    };
+
+    query_t query = {.root = &select_op};
+
+    execute_query(&query, gsource, gsink);
+
+    triple_t expected[10] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_PROJECT2, PREDICATE_REQUIRES_SKILL, OBJECT_DATA_ANALYSIS},
+
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
 }
 
 
