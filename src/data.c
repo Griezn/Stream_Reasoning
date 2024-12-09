@@ -2,6 +2,7 @@
 // Created by Seppe Degryse on 29/10/2024.
 //
 #include "data.h"
+#include "operator.h"
 
 #include <assert.h>
 #include <stdlib.h>

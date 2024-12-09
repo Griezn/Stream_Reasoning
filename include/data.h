@@ -3,21 +3,19 @@
 //
 #ifndef DATA_H
 #define DATA_H
-#include "defs.h"
+#include <stdint.h>
 
-#include <stdbool.h>
+typedef struct Triple {
+    uint32_t subject;
+    uint32_t predicate;
+    uint32_t object;
+} triple_t;
 
-void join_triple_copy(const data_t *src1, uint32_t index1,
-                    const data_t *src2, uint32_t index2, data_t *dest);
-
-bool join_check(const data_t *src1, uint32_t index1,
-                    const data_t *src2, uint32_t index2, join_params_t check);
-
-void triple_copy(const data_t *src, uint32_t index, data_t *dest);
-
-bool filter_check(const data_t *src, uint32_t index, filter_params_t check);
-
-bool select_check(const data_t *src, uint32_t index, select_params_t param);
+typedef struct Data {
+    struct Triple *data;
+    uint32_t size;
+    uint8_t width;
+} data_t;
 
 void free_data(data_t *data);
 

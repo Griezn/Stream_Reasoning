@@ -4,7 +4,17 @@
 #ifndef QUERY_H
 #define QUERY_H
 #include "source.h"
-#include "defs.h"
+#include "data.h"
+#include "operator.h"
+
+#include <stdint.h>
+
+
+
+typedef struct Query {
+    struct Operator *root;
+    bool quit;
+} query_t;
 
 typedef struct {
     const operator_t *operator_;

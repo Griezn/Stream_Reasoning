@@ -23,18 +23,20 @@ endif()
 
 include_directories(include)
 
-add_library(SR STATIC include/query.h src/query.c
+add_library(SR STATIC
+        include/query.h
+        src/query.c
         src/generator.c
         include/generator.h
         include/source.h
         include/data.h
         include/utils.h
         src/data.c
-        include/defs.h
         include/file_source.h
         src/file_source.c
         include/mutli_source.h
         src/multi_source.c
+        include/operator.h
 )
 
 enable_testing()

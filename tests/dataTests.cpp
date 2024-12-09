@@ -8,9 +8,9 @@
 
 extern "C" {
     #include "data.h"
-    #include "defs.h"
     #include "generator.h"
     #include "file_source.h"
+    #include "query.h"
 }
 
 
