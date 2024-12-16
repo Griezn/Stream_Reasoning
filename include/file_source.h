@@ -9,11 +9,9 @@
 typedef struct FileSource {
     source_t source;
     int fd;
-    uint32_t index;
-    uint32_t inc;
 } file_source_t;
 
-source_t *create_file_source(const char *filename, uint8_t wsize, uint32_t wstep);
+source_t *create_file_source(const char *filename);
 
 sink_t *create_file_sink();
 

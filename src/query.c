@@ -3,11 +3,9 @@
 //
 #include "query.h"
 #include "data.h"
-#include "utils.h"
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 #include <pthread.h>
 
 
@@ -56,20 +54,20 @@ void filter(const data_t *in, data_t *out, const filter_params_t param)
 
 
 /// The window operator creates a copy of the input stream in a newly specified size
-/// @param in The input stream
 /// @param out A selection of the input stream
-/// @param param The window parameter containing a size of the window
-void window(const data_t *in, data_t *out, const uint32_t param)
+/// @param params The window parameter
+bool window(data_t *out, const window_params_t params)
 {
-    const uint32_t size = min(in->size, param) * in->width;
-    out->data = malloc(size  * sizeof(triple_t));
-    assert(out->data);
-    out->size = in->size;
-    out->width = in->width;
+    data_t* data = params.source->get_next(params.source, params.size, params.step, params.calls);
 
-    // TODO: FIX LATER
-    //in->size = in->size - size;
-    memcpy(out->data, in->data, size * sizeof(triple_t));
+    if (data == NULL) {
+        *params.quit = true;
+        return false;
+    }
+
+    *out = *data;
+    free(data);
+    return true;
 }
 
 
@@ -95,11 +93,12 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-void execute_operator(const operator_t *operator_, const data_t *in, data_t *out);
+bool execute_operator(const operator_t *operator_, const data_t *in, data_t *out);
 void *execute_operator_thread(void *arg) {
     const operator_thread_arg_t *targ = arg;
-    execute_operator(targ->operator_, targ->in, targ->out);
-    return NULL;
+    bool *return_value = malloc(sizeof(bool));
+    *return_value = execute_operator(targ->operator_, targ->in, targ->out);
+    return return_value;
 }
 
 
@@ -107,7 +106,7 @@ void *execute_operator_thread(void *arg) {
 /// @param operator The operator to be executed
 /// @param in The input stream
 /// @param out The output stream
-void execute_operator(const operator_t *operator, const data_t *in, data_t *out)
+bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 {
     data_t tmpo1 = *in;
     data_t tmpo2 = {NULL, 0, 1};
@@ -117,20 +116,11 @@ void execute_operator(const operator_t *operator, const data_t *in, data_t *out)
             assert(operator->left);
             assert(operator->right);
 
-            // Thread arguments
-            operator_thread_arg_t left_arg = {operator->left, in, &tmpo1};
-            operator_thread_arg_t right_arg = {operator->right, in, &tmpo2};
+            bool left_bool = execute_operator(operator->left, in, &tmpo1);
+            bool right_bool = execute_operator(operator->right, in, &tmpo2);
 
-            // Threads
-            pthread_t left_thread, right_thread;
-
-            // Execute left and right operators in parallel
-            pthread_create(&left_thread, NULL, execute_operator_thread, &left_arg);
-            pthread_create(&right_thread, NULL, execute_operator_thread, &right_arg);
-
-            // Wait for threads to finish
-            pthread_join(left_thread, NULL);
-            pthread_join(right_thread, NULL);
+            if (!left_bool || !right_bool)
+                return false;
 
             join(&tmpo1, &tmpo2, out, operator->params.join);
 
@@ -139,30 +129,43 @@ void execute_operator(const operator_t *operator, const data_t *in, data_t *out)
             break;
         case FILTER:
             if (operator->left) {
-                execute_operator(operator->left, in, &tmpo1);
+                if(!execute_operator(operator->left, in, &tmpo1))
+                    return false;
             }
 
             filter(&tmpo1, out, operator->params.filter);
             break;
         case WINDOW:
             if (operator->left) {
-                execute_operator(operator->left, in, &tmpo1);
+                if(!execute_operator(operator->left, in, &tmpo1))
+                    return false;
             }
 
-            window(&tmpo1, out, operator->params.window);
+            if (!window(out, operator->params.window))
+                return false;
+
             break;
         case SELECT:
-            if (operator->left)
-                execute_operator(operator->left, in, &tmpo1);
+            if (operator->left) {
+                if(!execute_operator(operator->left, in, &tmpo1))
+                    return false;
+            }
 
             select_query(&tmpo1, out, operator->params.select);
             break;
     }
 
+
     if (tmpo1.data != in->data) {
+        assert(operator->left);
+        if (operator->left->type == WINDOW)
+            return true;
+
         free(tmpo1.data);
         tmpo1.data = NULL;
     }
+
+    return true;
 }
 
 
@@ -173,12 +176,10 @@ void execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 void execute_query(const query_t *query, const source_t *source, sink_t *sink)
 {
     data_t data = {NULL, 0, 1};
-    data_t* next_data = NULL;
 
-    while ((next_data = source->get_next(source)) != NULL) {
-        execute_operator(query->root, next_data, &data);
+    (void)source;
+    while (!query->quit) {
+        execute_operator(query->root, &data, &data);
         sink->push_next(sink, &data);
-        free(next_data);
-        next_data = NULL;
     }
 }

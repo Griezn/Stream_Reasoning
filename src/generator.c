@@ -57,15 +57,19 @@ triple_t triples[] = {
 
 #define NUM_TRIPLES (sizeof(triples) / sizeof(triples[0]))
 
-data_t* get_next_generator(const source_t *source) {
+data_t* get_next_generator(const source_t *source, const uint8_t size, const uint8_t step, const uint8_t calls) {
     generator_source_t* generator = (generator_source_t*) source;
-    if (!generator->has_next) {
+    if (generator->source.index + size > generator->source.buffer.size) {
         return NULL;
     }
-    generator->has_next = false;
 
     data_t *data = malloc(sizeof(data_t));
-    *data = generator->source.buffer;;
+    *data = generator->source.buffer;
+
+    if (++generator->source.calls == calls) {
+        generator->source.index += step;
+        generator->source.calls = 0;
+    }
 
     return data;
 }
@@ -76,7 +80,8 @@ source_t *create_generator_source()
     generator_source_t *source = malloc(sizeof(generator_source_t));
     source->source.buffer = (data_t) {triples, NUM_TRIPLES, 1};
     source->source.get_next = get_next_generator;
-    source->has_next =  true;
+    source->source.index = 0;
+    source->source.calls = 0;
 
     return (source_t*) source;
 }

@@ -14,26 +14,29 @@
 #include "utils.h"
 
 
-data_t *get_next_file(const source_t *source)
+data_t *get_next_file(const source_t *source, const uint8_t size, const uint8_t step, const uint8_t calls)
 {
     file_source_t *fs = (file_source_t*) source;
-    if (fs->index > fs->source.buffer.size) {
+    if (fs->source.index + step > fs->source.buffer.size) {
         return NULL;
     }
 
     data_t *data = malloc(sizeof(data_t));
     assert(data);
-    data->data = fs->source.buffer.data + (fs->index * fs->source.buffer.width);
-    data->size = min(fs->inc, fs->source.buffer.size - fs->index);
+    data->data = fs->source.buffer.data + (fs->source.index * fs->source.buffer.width);
+    data->size = min(size, fs->source.buffer.size - fs->source.index);
     data->width = source->buffer.width;
 
-    fs->index += fs->inc;
+    if (++fs->source.calls == calls) {
+        fs->source.index += step;
+        fs->source.calls = 0;
+    }
 
     return data;
 }
 
 
-source_t *create_file_source(const char *filename, uint8_t wsize, uint32_t wstep)
+source_t *create_file_source(const char *filename)
 {
     file_source_t *fs = malloc(sizeof(file_source_t));
 
@@ -60,10 +63,8 @@ source_t *create_file_source(const char *filename, uint8_t wsize, uint32_t wstep
     fs->source.buffer.size = sb.st_size / sizeof(triple_t);
     fs->source.buffer.width = 1;
     fs->source.get_next = get_next_file;
-    fs->index = 0;
-    fs->inc = wstep;
-
-    (void) wsize;
+    fs->source.index = 0;
+    fs->source.calls = 0;
 
     return  (source_t*) fs;
 }

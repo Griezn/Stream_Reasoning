@@ -147,13 +147,13 @@ TEST(DataTests, test_filter_check)
 TEST(DataTests, test_file_source)
 {
     source_t *gsource = create_generator_source();
-    source_t *fsource = create_file_source("../../tests/triples.bin" ,1, 255);
+    source_t *fsource = create_file_source("../../tests/triples.bin");
 
     sink_t *gsink = create_generator_sink();
     sink_t *fsink = create_generator_sink();
 
-    data_t *next_gdata = gsource->get_next(gsource);
-    data_t *next_fdata = fsource->get_next(fsource);
+    data_t *next_gdata = gsource->get_next(gsource, 36, 36, 1);
+    data_t *next_fdata = fsource->get_next(fsource, 36, 36, 1);
 
     gsink->push_next(gsink, next_gdata);
     fsink->push_next(fsink, next_fdata);
@@ -165,7 +165,7 @@ TEST(DataTests, test_file_source)
 
     free_generator_source(gsource);
     free_file_source(fsource);
-    free(gsink); // not the normal because it is still the array allocated int he lib
+    free(gsink); // not the normal because it is still the array allocated in the lib
     free(fsink); // not the normal because buffer is freed in source
 }
 
@@ -174,13 +174,13 @@ TEST(DataTests, test_file_source_inc)
 {
     constexpr uint32_t increment = 12;
     source_t *gsource = create_generator_source();
-    source_t *fsource = create_file_source("../../tests/triples.bin" ,1, increment);
+    source_t *fsource = create_file_source("../../tests/triples.bin");
 
     sink_t *gsink = create_generator_sink();
     sink_t *fsink = create_generator_sink();
 
-    data_t *next_gdata = gsource->get_next(gsource);
-    data_t *next_fdata = fsource->get_next(fsource);
+    data_t *next_gdata = gsource->get_next(gsource, increment, increment, 1);
+    data_t *next_fdata = fsource->get_next(fsource, increment, increment, 1);
 
     gsink->push_next(gsink, next_gdata);
     fsink->push_next(fsink, next_fdata);
@@ -188,13 +188,13 @@ TEST(DataTests, test_file_source_inc)
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, fsink->buffer.data, increment));
 
     free(next_fdata);
-    next_fdata = fsource->get_next(fsource);
+    next_fdata = fsource->get_next(fsource, increment, increment, 1);
     fsink->push_next(fsink, next_fdata);
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data + increment, fsink->buffer.data, increment));
 
     free(next_fdata);
-    next_fdata = fsource->get_next(fsource);
+    next_fdata = fsource->get_next(fsource, increment, increment,1);
     fsink->push_next(fsink, next_fdata);
 
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data + 2*increment, fsink->buffer.data, increment));

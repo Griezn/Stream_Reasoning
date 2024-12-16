@@ -5,11 +5,8 @@
 #define GENERATOR_H
 #include "source.h"
 
-#include <stdbool.h>
-
 typedef struct GeneratorSource {
     source_t source;
-    bool has_next;
 } generator_source_t;
 
 source_t *create_generator_source();
@@ -19,8 +16,6 @@ sink_t *create_generator_sink();
 void free_generator_source(source_t *source);
 
 void free_generator_sink(sink_t *sink);
-
-#define GENERATOR_SIZE 10
 
 enum subject {
     SUBJECT_ALICE,
