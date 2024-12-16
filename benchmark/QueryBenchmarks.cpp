@@ -7,7 +7,6 @@
 #include "data/traffic_data.hpp"
 
 extern "C" {
-    #include "defs.h"
     #include "generator.h"
     #include "query.h"
     #include "file_source.h"
@@ -46,6 +45,19 @@ bool check_filter5(const triple_t in)
 
 static void BM_ExecuteQuery(benchmark::State& state)
 {
+    query_t query;
+    // Create generator source and sink
+    source_t *source = create_generator_source(3);
+    sink_t *sink = create_generator_sink();
+
+    window_params_t wparams = {36, 36, source};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams}
+    };
+
     // Setup the query
     filter_check_t conditions1[1] = {check_filter};
     filter_check_t conditions2[1] = {check_filter3};
@@ -56,14 +68,14 @@ static void BM_ExecuteQuery(benchmark::State& state)
 
     operator_t filter_has_skill = {
         .type = FILTER,
-        .left = nullptr,
+        .left = &window_op,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions1}}
     };
 
     operator_t filter_req_skill = {
         .type = FILTER,
-        .left = nullptr,
+        .left = &window_op,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
@@ -77,7 +89,7 @@ static void BM_ExecuteQuery(benchmark::State& state)
 
     operator_t filter_has_age = {
         .type = FILTER,
-        .left = nullptr,
+        .left = &window_op,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions4}}
     };
@@ -96,20 +108,16 @@ static void BM_ExecuteQuery(benchmark::State& state)
         .params = {.filter = {.size = 1, .checks = conditions6}}
     };
 
-    query_t query = {.root = &filter_older};
-
-    // Create generator source and sink
-    source_t *gsource = create_generator_source();
-    sink_t *gsink = create_generator_sink();
+    query = {.root = &filter_older};
 
     // Benchmark loop
     for (auto _ : state) {
-        execute_query(&query, gsource, gsink);
+        execute_query(&query, sink);
     }
 
     // Clean up
-    free_generator_source(gsource);
-    free_generator_sink(gsink);
+    free_generator_source(source);
+    free_generator_sink(sink);
 }
 
 BENCHMARK(BM_ExecuteQuery);
@@ -120,44 +128,62 @@ bool check_join3(const triple_t in1, const triple_t in2)
     return in1.subject == in2.subject;
 }
 
-
-static void BM_traffic_select_join(benchmark::State& state)
+bool filter_obs_propD(const triple_t in)
 {
-    uint8_t predicates[1] = {SOSA_OBSERVATION};
-    uint8_t predicates2[1] = {SOSA_HAS_SIMPLE_RESULT};
+    return in.predicate == SOSA_OBSERVED_PROPERTY;
+}
+
+bool filter_has_valueD(const triple_t in)
+{
+    return in.predicate == SOSA_HAS_SIMPLE_RESULT;
+}
+
+
+static void BM_traffic_filter_join(benchmark::State& state)
+{
+    query_t query;
+
+    // Create generator source and sink
+    source_t *source = create_file_source("../../benchmark/data/traffic_triples1.bin", 2);
+    sink_t *sink = create_file_sink();
+
+    window_params_t wparams = {255, 255, source};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams}
+    };
+
+    filter_check_t obs_prop[1] = {filter_obs_propD};
+    operator_t filter_obs = {
+        .type = FILTER,
+        .left = &window_op,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = obs_prop}}
+    };
+
+    filter_check_t has_value[1] = {filter_has_valueD};
+    operator_t filter_simple_result = {
+        .type = FILTER,
+        .left = &window_op,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = has_value}}
+    };
+
     join_check_t conditions3[1] = {check_join3};
-
-    operator_t select_obs = {
-        .type = SELECT,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.select = {.size = 1, .colums = predicates}}
-    };
-
-    operator_t select_simple_result = {
-        .type = SELECT,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.select = {.size = 1, .colums = predicates2}}
-    };
-
     operator_t join_obs = {
         .type = JOIN,
-        .left = &select_obs,
-        .right = &select_simple_result,
+        .left = &filter_obs,
+        .right = &filter_simple_result,
         .params = {.join = {.size = 1, .checks = conditions3}}
     };
 
-
-    query_t query = {.root = &join_obs};
-
-    // Create generator source and sink
-    source_t *source = create_file_source("../../benchmark/data/traffic_triples1.bin", 1, 255);
-    sink_t *sink = create_file_sink();
+    query = {.root = &join_obs};
 
     // Benchmark loop
     for (auto _ : state) {
-        execute_query(&query, source, sink);
+        execute_query(&query, sink);
     }
 
     // Clean up
@@ -165,6 +191,6 @@ static void BM_traffic_select_join(benchmark::State& state)
     free_file_sink(sink);
 }
 
-BENCHMARK(BM_traffic_select_join);
+BENCHMARK(BM_traffic_filter_join);
 
 BENCHMARK_MAIN();
