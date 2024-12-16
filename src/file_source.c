@@ -14,7 +14,7 @@
 #include "utils.h"
 
 
-data_t *get_next_file(const source_t *source, const uint8_t size, const uint8_t step, const uint8_t calls)
+data_t *get_next_file(const source_t *source, const uint8_t size, const uint8_t step)
 {
     file_source_t *fs = (file_source_t*) source;
     if (fs->source.index + step > fs->source.buffer.size) {
@@ -27,16 +27,16 @@ data_t *get_next_file(const source_t *source, const uint8_t size, const uint8_t 
     data->size = min(size, fs->source.buffer.size - fs->source.index);
     data->width = source->buffer.width;
 
-    if (++fs->source.calls == calls) {
+    if (++fs->source.consumed == fs->source.consumers) {
         fs->source.index += step;
-        fs->source.calls = 0;
+        fs->source.consumed = 0;
     }
 
     return data;
 }
 
 
-source_t *create_file_source(const char *filename)
+source_t *create_file_source(const char *filename, const uint8_t consumers)
 {
     file_source_t *fs = malloc(sizeof(file_source_t));
 
@@ -64,7 +64,8 @@ source_t *create_file_source(const char *filename)
     fs->source.buffer.width = 1;
     fs->source.get_next = get_next_file;
     fs->source.index = 0;
-    fs->source.calls = 0;
+    fs->source.consumers = consumers;
+    fs->source.consumed = 0;
 
     return  (source_t*) fs;
 }

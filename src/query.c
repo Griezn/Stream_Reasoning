@@ -58,7 +58,7 @@ void filter(const data_t *in, data_t *out, const filter_params_t param)
 /// @param params The window parameter
 bool window(data_t *out, const window_params_t params)
 {
-    data_t* data = params.source->get_next(params.source, params.size, params.step, params.calls);
+    data_t* data = params.source->get_next(params.source, params.size, params.step);
 
     if (data == NULL) {
         *params.quit = true;

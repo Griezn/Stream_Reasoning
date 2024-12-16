@@ -11,7 +11,7 @@ typedef struct FileSource {
     int fd;
 } file_source_t;
 
-source_t *create_file_source(const char *filename);
+source_t *create_file_source(const char *filename, uint8_t consumers);
 
 sink_t *create_file_sink();
 

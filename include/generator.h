@@ -9,7 +9,7 @@ typedef struct GeneratorSource {
     source_t source;
 } generator_source_t;
 
-source_t *create_generator_source();
+source_t *create_generator_source(uint8_t consumers);
 
 sink_t *create_generator_sink();
 

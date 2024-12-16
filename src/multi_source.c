@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 
-data_t *get_next_multi_source(const source_t *source, const uint8_t size, const uint8_t step, const uint8_t calls)
+data_t *get_next_multi_source(const source_t *source, const uint8_t size, const uint8_t step)
 {
     multi_source_t *ms = (multi_source_t*) source;
     data_t* datas[ms->num_sources];
@@ -18,7 +18,7 @@ data_t *get_next_multi_source(const source_t *source, const uint8_t size, const 
 
     // fetch data, set size
     for (int i = 0; i < ms->num_sources; ++i) {
-        data_t *next = ms->sources[i]->get_next(ms->sources[i], size, step, calls);
+        data_t *next = ms->sources[i]->get_next(ms->sources[i], size, step);
 
         if (next == NULL)
             return NULL;

@@ -21,7 +21,7 @@ protected:
 
     void SetUp() override
     {
-        gsource = create_generator_source();
+        gsource = create_generator_source(1);
         gsink = create_generator_sink();
     }
 
@@ -100,7 +100,7 @@ bool check_filter(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter)
 {
-    window_params_t wparams = {36, 36, 1, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36, &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -139,7 +139,7 @@ bool check_filter2(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter2)
 {
-    window_params_t wparams = {36, 36, 1, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36, &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -184,7 +184,7 @@ bool check_filter7(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter3)
 {
-    window_params_t wparams = {36, 36, 1, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36, &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -298,7 +298,8 @@ bool check_filter3(const triple_t in)
 /// @test Filter to get people who have a skill that is required by a project
 TEST_F(QueryTestFixture, test_query_join)
 {
-    window_params_t wparams = {36, 36, 2, &gquery.quit, gsource};
+    source_set_comsumers(gsource, 2);
+    window_params_t wparams = {36, 36, &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -357,7 +358,8 @@ TEST_F(QueryTestFixture, test_query_join)
 
 TEST_F(QueryTestFixture, test_query_select)
 {
-    window_params_t wparams = {36, 36, 2, &gquery.quit, gsource};
+    source_set_comsumers(gsource, 2);
+    window_params_t wparams = {36, 36,  &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -419,7 +421,8 @@ TEST_F(QueryTestFixture, test_query_select)
 
 TEST_F(QueryTestFixture, test_query_select2)
 {
-    window_params_t wparams = {36, 36, 2, &gquery.quit, gsource};
+    source_set_comsumers(gsource, 2);
+    window_params_t wparams = {36, 36, &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -506,7 +509,8 @@ bool check_filter5(const triple_t in)
 /// And that are older than 30
 TEST_F(QueryTestFixture, test_query_1)
 {
-    window_params_t wparams = {36, 36, 3, &gquery.quit, gsource};
+    source_set_comsumers(gsource, 3);
+    window_params_t wparams = {36, 36,  &gquery.quit, gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
