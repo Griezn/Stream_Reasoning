@@ -8,7 +8,7 @@
 // Created a source to enable other sources than generator e.g. network
 typedef struct Source {
     data_t buffer;
-    uint8_t index;
+    uint32_t index;
     uint8_t consumers;
     uint8_t consumed;
     data_t* (*get_next)(const struct Source *self, const uint8_t size, const uint8_t step);

@@ -163,6 +163,8 @@ TEST(DataTests, test_file_source)
     free(next_gdata);
     free(next_fdata);
 
+    ASSERT_EQ(fsource->get_next(fsource, 36, 36), nullptr);
+
     free_generator_source(gsource);
     free_file_source(fsource);
     free(gsink); // not the normal because it is still the array allocated in the lib
@@ -201,6 +203,8 @@ TEST(DataTests, test_file_source_inc)
 
     free(next_gdata);
     free(next_fdata);
+
+    ASSERT_EQ(fsource->get_next(fsource, increment, increment), nullptr);
 
     free_generator_source(gsource);
     free_file_source(fsource);

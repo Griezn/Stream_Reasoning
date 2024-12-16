@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 
 /// The join operator
@@ -60,10 +59,8 @@ bool window(data_t *out, const window_params_t params)
 {
     data_t* data = params.source->get_next(params.source, params.size, params.step);
 
-    if (data == NULL) {
-        *params.quit = true;
+    if (data == NULL)
         return false;
-    }
 
     *out = *data;
     free(data);
@@ -173,13 +170,11 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 /// @param query The query to be executed
 /// @param source The source creating the input stream
 /// @param sink The sink consuming the output stream
-void execute_query(const query_t *query, const source_t *source, sink_t *sink)
+void execute_query(const query_t *query, sink_t *sink)
 {
     data_t data = {NULL, 0, 1};
 
-    (void)source;
-    while (!query->quit) {
-        execute_operator(query->root, &data, &data);
+    while (execute_operator(query->root, &data, &data)) {
         sink->push_next(sink, &data);
     }
 }

@@ -54,10 +54,10 @@ TEST_F(QueryTestFixture, test_query_join_death_no_children)
         .right = nullptr,
         .params = {.join = {.size = 1, .checks = conditions}}
     };
-    query_t query_join = {.root = &join_op, .quit = false};
+    query_t query_join = {.root = &join_op};
 
     // Program should abort because .left and .right are NULL
-    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsink), "");
 }
 
 TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
@@ -70,10 +70,10 @@ TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
         .right = &join_op,
         .params = {.join = {.size = 1, .checks = conditions}}
     };
-    query_t query_join = {.root = &join_op, .quit = false};
+    query_t query_join = {.root = &join_op};
 
     // Program should abort because .left is NULL
-    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsink), "");
 }
 
 TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
@@ -86,10 +86,10 @@ TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
         .right = nullptr,
         .params = {.join = {.size = 1, .checks = conditions}}
     };
-    query_t query_join = {.root = &join_op, .quit = false};
+    query_t query_join = {.root = &join_op};
 
     // Program should abort because .right is NULL
-    ASSERT_DEATH(execute_query(&query_join, gsource, gsink), "");
+    ASSERT_DEATH(execute_query(&query_join, gsink), "");
 }
 
 
@@ -100,7 +100,7 @@ bool check_filter(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter)
 {
-    window_params_t wparams = {36, 36, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -116,9 +116,9 @@ TEST_F(QueryTestFixture, test_query_filter)
         .params = {.filter = {.size = 1, .checks = conditions}}
     };
 
-    gquery = {.root = &filter_op, .quit = false};
+    gquery = {.root = &filter_op};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
     triple_t expected[8] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
@@ -139,7 +139,7 @@ bool check_filter2(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter2)
 {
-    window_params_t wparams = {36, 36, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -163,9 +163,9 @@ TEST_F(QueryTestFixture, test_query_filter2)
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
 
-    gquery = {.root = &filter_op2, .quit = false};
+    gquery = {.root = &filter_op2};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
     triple_t expected[4] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
         {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
@@ -184,7 +184,7 @@ bool check_filter7(const triple_t in)
 
 TEST_F(QueryTestFixture, test_query_filter3)
 {
-    window_params_t wparams = {36, 36, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -216,9 +216,9 @@ TEST_F(QueryTestFixture, test_query_filter3)
         .params = {.filter = {.size = 1, .checks = conditions3}}
     };
 
-    gquery = {.root = &filter_op3, .quit = false};
+    gquery = {.root = &filter_op3};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
     triple_t expected[1] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
     };
@@ -299,7 +299,7 @@ bool check_filter3(const triple_t in)
 TEST_F(QueryTestFixture, test_query_join)
 {
     source_set_comsumers(gsource, 2);
-    window_params_t wparams = {36, 36, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -332,9 +332,9 @@ TEST_F(QueryTestFixture, test_query_join)
         .params = {.join = {.size = 1, .checks = conditions3}}
     };
 
-    gquery = {.root = &join_op, .quit = false};
+    gquery = {.root = &join_op};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
 
     triple_t expected[10] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
@@ -359,7 +359,7 @@ TEST_F(QueryTestFixture, test_query_join)
 TEST_F(QueryTestFixture, test_query_select)
 {
     source_set_comsumers(gsource, 2);
-    window_params_t wparams = {36, 36,  &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,   gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -400,9 +400,9 @@ TEST_F(QueryTestFixture, test_query_select)
         .params = {.select = {.size = 1, .colums = predicates}}
     };
 
-    gquery = {.root = &select_op, .quit = false};
+    gquery = {.root = &select_op};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
 
     triple_t expected[5] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
@@ -422,7 +422,7 @@ TEST_F(QueryTestFixture, test_query_select)
 TEST_F(QueryTestFixture, test_query_select2)
 {
     source_set_comsumers(gsource, 2);
-    window_params_t wparams = {36, 36, &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -463,9 +463,9 @@ TEST_F(QueryTestFixture, test_query_select2)
         .params = {.select = {.size = 2, .colums = predicates}}
     };
 
-    gquery = {.root = &select_op, .quit = false};
+    gquery = {.root = &select_op};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
 
     triple_t expected[10] = {
         {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
@@ -510,7 +510,7 @@ bool check_filter5(const triple_t in)
 TEST_F(QueryTestFixture, test_query_1)
 {
     source_set_comsumers(gsource, 3);
-    window_params_t wparams = {36, 36,  &gquery.quit, gsource};
+    window_params_t wparams = {36, 36,   gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
@@ -567,9 +567,9 @@ TEST_F(QueryTestFixture, test_query_1)
         .params = {.filter = {.size = 1, .checks = conditions6}}
     };
 
-    gquery = {.root = &filter_older, .quit = false};
+    gquery = {.root = &filter_older};
 
-    execute_query(&gquery, gsource, gsink);
+    execute_query(&gquery, gsink);
 
     triple_t expected[6] = {
         {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},

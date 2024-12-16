@@ -13,7 +13,6 @@
 
 typedef struct Query {
     struct Operator *root;
-    bool quit;
 } query_t;
 
 typedef struct {
@@ -23,7 +22,7 @@ typedef struct {
 } operator_thread_arg_t;
 
 
-void execute_query(const query_t *query, const source_t *source, sink_t *sink);
+void execute_query(const query_t *query, sink_t *sink);
 
 void join_triple_copy(const data_t *src1, uint32_t index1,
                     const data_t *src2, uint32_t index2, data_t *dest);
