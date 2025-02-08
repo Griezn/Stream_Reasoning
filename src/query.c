@@ -74,10 +74,11 @@ bool window(data_t *out, const window_params_t params)
 /// @param param The select parameter containing an array with the wanted predicates
 void select_query(const data_t *in, data_t *out, const select_params_t param)
 {
-    const uint32_t size = in->size * param.size;
+    // TODO: add extra test for double occurences in 1 row
+    const uint32_t size = in->size * param.width;
     out->data = malloc(size * sizeof(triple_t));
     out->size = in->size;
-    out->width = param.size;
+    out->width = param.width;
     uint32_t out_idx = 0;
 
     for (uint32_t i = 0; i < in->size; ++i) {
@@ -168,7 +169,6 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 
 /// This function pulls the data out of the source, runs it through the query and sends it to the sink
 /// @param query The query to be executed
-/// @param source The source creating the input stream
 /// @param sink The sink consuming the output stream
 void execute_query(const query_t *query, sink_t *sink)
 {

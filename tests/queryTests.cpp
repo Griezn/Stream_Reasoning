@@ -397,7 +397,7 @@ TEST_F(QueryTestFixture, test_query_select)
         .type = SELECT,
         .left = &join_op,
         .right = nullptr,
-        .params = {.select = {.size = 1, .colums = predicates}}
+        .params = {.select = {.width = 1, .size = 1, .colums = predicates}}
     };
 
     gquery = {.root = &select_op};
@@ -460,7 +460,7 @@ TEST_F(QueryTestFixture, test_query_select2)
         .type = SELECT,
         .left = &join_op,
         .right = nullptr,
-        .params = {.select = {.size = 2, .colums = predicates}}
+        .params = {.select = {.width = 2, .size = 2, .colums = predicates}}
     };
 
     gquery = {.root = &select_op};

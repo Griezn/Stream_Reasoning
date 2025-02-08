@@ -31,6 +31,7 @@ typedef struct FilterParams {
 } filter_params_t;
 
 typedef struct SelectParams {
+    uint8_t width;
     uint8_t size;
     uint8_t *colums;
 } select_params_t;
