@@ -30,57 +30,56 @@ where {
 #include <benchmark/benchmark.h>
 
 #include "data/traffic_data.hpp"
+using namespace traffic_data; // Because it is the only namespace we use
 
 extern "C" {
     #include "query.h"
     #include "file_source.h"
 }
 
-bool natural_join(const triple_t in1, const triple_t in2)
+bool check_avg_speed_prop(const triple_t in)
 {
-    return in1.subject == in2.subject;
+    return in.predicate == SOSA_OBSERVED_PROPERTY && in.object == AVG_SPEED;
 }
 
-bool filter_obs_prop(const triple_t in)
-{
-    return in.predicate == SOSA_OBSERVED_PROPERTY;
-}
 
-bool filter_has_value(const triple_t in)
+bool check_has_simple_res(const triple_t in)
 {
     return in.predicate == SOSA_HAS_SIMPLE_RESULT;
 }
 
-bool filter_obs_id(const triple_t in)
+
+bool check_natural_join(const triple_t in1, const triple_t in2)
 {
-    return in.predicate == SOSA_MADE_BY_SENSOR;
+    return in1.subject == in2.subject;
 }
 
-bool filter_id(const triple_t in)
+
+bool check_join_all(const triple_t in1, const triple_t in2)
 {
-    return in.predicate == SOSA_OBSERVATION;
+    return true;
 }
 
-bool check_join_main1(const triple_t in1, const triple_t in2)
-{
-    return in1.predicate == SOSA_OBSERVATION && in2.predicate == SOSA_OBSERVATION;
-}
 
-static void query1(benchmark::State& state)
+static void BM_Query1(benchmark::State& state)
 {
-    source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 4);
-    source_t *source2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 4);
+    // Extract window parameters from the benchmark state
+    uint32_t window_size = state.range(0);
+    uint32_t step_size = state.range(1);
+
+    source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
+    source_t *source2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
     sink_t *sink = create_file_sink();
 
-    window_params_t wparams = {255, 255, source1};
-    operator_t window_op = {
+    window_params_t wparams = {window_size, step_size, source1};
+    operator_t window_op1 = {
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
         .params = {.window = wparams}
     };
 
-    window_params_t wparams2 = {255, 255, source2};
+    window_params_t wparams2 = {window_size, step_size, source2};
     operator_t window_op2 = {
         .type = WINDOW,
         .left = nullptr,
@@ -88,121 +87,70 @@ static void query1(benchmark::State& state)
         .params = {.window = wparams2}
     };
 
-
-    filter_check_t obs_prop[1] = {filter_obs_prop};
-    operator_t filter_obs_prop = {
+    // STREAM 1
+    filter_check_t avg_speed_check[1] = {check_avg_speed_prop};
+    operator_t filter_avg_speed1 = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op1,
         .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = obs_prop}}
+        .params = {.filter = {.size = 1, avg_speed_check}}
     };
 
-    filter_check_t has_value[1] = {filter_has_value};
-    operator_t filter_has_value = {
+    filter_check_t has_simple_res_check[1] = {check_has_simple_res};
+    operator_t filter_has_simple_res1 = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op1,
         .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = has_value}}
+        .params = {.filter = {.size = 1, has_simple_res_check}}
     };
 
-    join_check_t cond[1] = {natural_join};
-    operator_t join_val_obs = {
-        .type = JOIN,
-        .left = &filter_obs_prop,
-        .right = &filter_has_value,
-        .params = {.join = {.size = 1, .checks = cond}}
-    };
-
-    filter_check_t obs_id[1] = {filter_obs_id};
-    operator_t filter_obs_id = {
-        .type = FILTER,
-        .left = &window_op,
-        .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = obs_id}}
-    };
-
-    filter_check_t _id[1] = {filter_id};
-    operator_t filter_id = {
-        .type = FILTER,
-        .left = &window_op,
-        .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = _id}}
-    };
-
-    operator_t join_obs_id_id = {
-        .type = JOIN,
-        .left = &filter_id,
-        .right = &filter_obs_id,
-        .params = {.join = {.size = 1, .checks = cond}}
-    };
-
+    join_check_t cond[1] = {check_natural_join};
     operator_t join_stream1 = {
         .type = JOIN,
-        .left = &join_obs_id_id,
-        .right = &join_val_obs,
+        .left = &filter_avg_speed1,
+        .right = &filter_has_simple_res1,
         .params = {.join = {.size = 1, .checks = cond}}
     };
 
-    // STREAM 2
-    operator_t filter_obs_prop2 = {
+    // STREAM 1
+    operator_t filter_avg_speed2 = {
         .type = FILTER,
         .left = &window_op2,
         .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = obs_prop}}
+        .params = {.filter = {.size = 1, avg_speed_check}}
     };
 
-    operator_t filter_has_value2 = {
+    operator_t filter_has_simple_res2 = {
         .type = FILTER,
         .left = &window_op2,
         .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = has_value}}
-    };
-
-    operator_t join_val_obs2 = {
-        .type = JOIN,
-        .left = &filter_obs_prop2,
-        .right = &filter_has_value2,
-        .params = {.join = {.size = 1, .checks = cond}}
-    };
-
-    operator_t filter_obs_id2 = {
-        .type = FILTER,
-        .left = &window_op2,
-        .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = obs_id}}
-    };
-
-    operator_t filter_id2 = {
-        .type = FILTER,
-        .left = &window_op2,
-        .right = nullptr,
-        .params = {.filter = {.size = 1, .checks = _id}}
-    };
-
-    operator_t join_obs_id_id2 = {
-        .type = JOIN,
-        .left = &filter_id2,
-        .right = &filter_obs_id2,
-        .params = {.join = {.size = 1, .checks = cond}}
+        .params = {.filter = {.size = 1, has_simple_res_check}}
     };
 
     operator_t join_stream2 = {
         .type = JOIN,
-        .left = &join_obs_id_id2,
-        .right = &join_val_obs2,
+        .left = &filter_avg_speed2,
+        .right = &filter_has_simple_res2,
         .params = {.join = {.size = 1, .checks = cond}}
     };
 
-    // JOIN THE 2 STREAMS
-    join_check_t cond_main[2] = {check_join_main1, natural_join};
+    join_check_t cond_main[1] = {check_join_all};
     operator_t join_main = {
         .type = JOIN,
         .left = &join_stream1,
         .right = &join_stream2,
-        .params = {.join = {.size = 2, .checks = cond_main}}
+        .params = {.join = {.size = 1, .checks = cond_main}}
     };
 
-    query_t query = {.root = &join_main};
+    uint8_t predicates[1] = {SOSA_HAS_SIMPLE_RESULT};
+    operator_t select_attr = {
+        .type = SELECT,
+        .left = &join_main,
+        .right = nullptr,
+        .params = {.select = {.width = 2, .size = 1, .colums = predicates}}
+    };
+
+    query_t query = {.root = &select_attr};
 
     for (auto _ : state) {
         execute_query(&query, sink);
@@ -213,4 +161,4 @@ static void query1(benchmark::State& state)
     free_file_sink(sink);
 }
 
-BENCHMARK(query1);
+BENCHMARK(BM_Query1)->RangeMultiplier(2)->Ranges({{256, 2048}, {64, 512}});
