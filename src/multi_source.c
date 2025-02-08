@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 
-data_t *get_next_multi_source(const source_t *source, const uint8_t size, const uint8_t step)
+data_t *get_next_multi_source(const source_t *source, const uint32_t size, const uint32_t step)
 {
     multi_source_t *ms = (multi_source_t*) source;
     data_t* datas[ms->num_sources];

@@ -57,7 +57,7 @@ triple_t triples[] = {
 
 #define NUM_TRIPLES (sizeof(triples) / sizeof(triples[0]))
 
-data_t* get_next_generator(const source_t *source, const uint8_t size, const uint8_t step) {
+data_t* get_next_generator(const source_t *source, const uint32_t size, const uint32_t step) {
     generator_source_t* generator = (generator_source_t*) source;
     if (generator->source.index + size > generator->source.buffer.size) {
         return NULL;

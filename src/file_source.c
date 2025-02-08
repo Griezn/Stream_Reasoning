@@ -14,7 +14,7 @@
 #include "utils.h"
 
 
-data_t *get_next_file(const source_t *source, const uint8_t size, const uint8_t step)
+data_t *get_next_file(const source_t *source, const uint32_t size, const uint32_t step)
 {
     file_source_t *fs = (file_source_t*) source;
     if (fs->source.index + step > fs->source.buffer.size) {

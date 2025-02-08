@@ -36,8 +36,8 @@ typedef struct SelectParams {
 } select_params_t;
 
 typedef struct WindowParams {
-    uint8_t size;
-    uint8_t step;
+    uint32_t size;
+    uint32_t step;
     source_t *source;
 } window_params_t;
 

@@ -11,7 +11,7 @@ typedef struct Source {
     uint32_t index;
     uint8_t consumers;
     uint8_t consumed;
-    data_t* (*get_next)(const struct Source *self, const uint8_t size, const uint8_t step);
+    data_t* (*get_next)(const struct Source *self, const uint32_t size, const uint32_t step);
 } source_t;
 
 typedef struct Sink {

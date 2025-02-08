@@ -10,12 +10,12 @@
 void join_triple_copy(const data_t *src1, const uint32_t index1,
                         const data_t *src2, const uint32_t index2, data_t *dest)
 {
-    int index = dest->size * dest->width;
-    for (int i = 0; i < src1->width; ++i) {
+    uint32_t index = dest->size * dest->width;
+    for (uint32_t i = 0; i < src1->width; ++i) {
         dest->data[index++] = src1->data[index1 + i];
     }
 
-    for (int i = 0; i < src2->width; ++i) {
+    for (uint32_t i = 0; i < src2->width; ++i) {
         dest->data[index++] = src2->data[index2 + i];
     }
 
@@ -30,8 +30,8 @@ bool join_check(const data_t *src1, const uint32_t index1,
     for (int k = 0; k < check.size; ++k) {
         bool match_found = false;
         // loop over all triple combinations
-        for (int i = 0; i < src1->width && !match_found; ++i) {
-            for (int j = 0; j < src2->width && !match_found; ++j) {
+        for (uint32_t i = 0; i < src1->width && !match_found; ++i) {
+            for (uint32_t j = 0; j < src2->width && !match_found; ++j) {
                 if (check.checks[k](src1->data[index1 + i], src2->data[index2 + j])) {
                     checks_passed++;
                     match_found = true;
@@ -47,8 +47,8 @@ bool join_check(const data_t *src1, const uint32_t index1,
 
 void triple_copy(const data_t *src, const uint32_t index, data_t *dest)
 {
-    int dest_index = dest->size * dest->width;
-    for (int i = 0; i < src->width; ++i) {
+    uint32_t dest_index = dest->size * dest->width;
+    for (uint32_t i = 0; i < src->width; ++i) {
         dest->data[dest_index++] = src->data[index + i];
     }
 
@@ -61,7 +61,7 @@ bool filter_check(const data_t *src, const uint32_t index, const filter_params_t
     uint8_t checks_passed = 0;
     for (int k = 0; k < check.size; ++k) {
         bool triple_found = false;
-        for (int i = 0; i < src->width && !triple_found; ++i) {
+        for (uint32_t i = 0; i < src->width && !triple_found; ++i) {
             if (check.checks[k](src->data[index + i])) {
                 checks_passed++;
                 triple_found = true;
