@@ -15,6 +15,9 @@ add_executable(
         QueryBenchmarks.cpp
         data/traffic_data.hpp
         Query1.cpp
+        query2.cpp
+        data/weather_data.hpp
+        default_checks.hpp
 )
 
 target_link_libraries(SR_BENCH SR benchmark::benchmark benchmark::benchmark_main)
