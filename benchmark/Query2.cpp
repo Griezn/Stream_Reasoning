@@ -122,7 +122,7 @@ namespace
         filter_check_t temp_prop_checks[1] = {check_temp_prop};
         operator_t filter_temp_prop {
             .type = FILTER,
-            .left = &window_op_traffic,
+            .left = &window_op_weather,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = temp_prop_checks}}
         };
@@ -162,7 +162,7 @@ namespace
         filter_check_t hum_prop_checks[1] = {check_humidity_prop};
         operator_t filter_hum_prop {
             .type = FILTER,
-            .left = &window_op_traffic,
+            .left = &window_op_weather,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = hum_prop_checks}}
         };
@@ -199,7 +199,7 @@ namespace
         filter_check_t wspd_prop_checks[1] = {check_wspd_prop};
         operator_t filter_wspd_prop {
             .type = FILTER,
-            .left = &window_op_traffic,
+            .left = &window_op_weather,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = wspd_prop_checks}}
         };
@@ -247,6 +247,14 @@ namespace
             .params = {.join = {.size = 1, .checks = eq_time_check}}
         };
 
+        uint8_t predicates[1] = {weather_data::SOSA_HAS_SIMPLE_RESULT};
+        operator_t select_attr1 = {
+            .type = SELECT,
+            .left = &join_temp_hum_wspd,
+            .right = nullptr,
+            .params = {.select = {.width = 3, .size = 1, .colums = predicates}}
+        };
+
         // TRAFFIC
         filter_check_t avg_speed_check[1] = {check_avg_speed_prop};
         operator_t filter_avg_speed1 = {
@@ -270,6 +278,13 @@ namespace
             .left = &filter_avg_speed1,
             .right = &filter_has_simple_res1,
             .params = {.join = {.size = 1, .checks = cond}}
+        };
+
+        operator_t select_attr2 = {
+            .type = SELECT,
+            .left = &join_traffic,
+            .right = nullptr,
+            .params = {.select = {.width = 3, .size = 1, .colums = predicates}}
         };
 
         // MAIN JOIN

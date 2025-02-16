@@ -128,14 +128,14 @@ namespace
             .type = SELECT,
             .left = &join_stream1,
             .right = nullptr,
-            .params = {.select = {.width = 2, .size = 1, .colums = predicates}}
+            .params = {.select = {.width = 1, .size = 1, .colums = predicates}}
         };
 
         operator_t select_attr2 = {
             .type = SELECT,
             .left = &join_stream2,
             .right = nullptr,
-            .params = {.select = {.width = 2, .size = 1, .colums = predicates}}
+            .params = {.select = {.width = 1, .size = 1, .colums = predicates}}
         };
 
         operator_t cart_join_main = {
