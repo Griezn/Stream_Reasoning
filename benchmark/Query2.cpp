@@ -97,8 +97,8 @@ namespace
         uint32_t window_size = state.range(0);
 
         source_t *tsource = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
-        source_t *wsource = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 2);
-        sink_t *sink = create_file_sink();
+        source_t *wsource = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 9);
+        sink_t *sink = create_file_sink(nullptr);
 
         window_params_t wparams_traffic = {window_size, window_size, tsource};
         operator_t window_op_traffic = {

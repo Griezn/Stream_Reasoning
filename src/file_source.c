@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -79,12 +80,31 @@ void push_next_fsink(sink_t *sink, const data_t *data)
 }
 
 
-sink_t *create_file_sink()
+void push_next_fsink_write(sink_t *sink, const data_t *data)
 {
-    sink_t *sink = malloc(sizeof(sink_t));
-    sink->buffer = (data_t) {NULL, 0, 1};
-    sink->push_next = push_next_fsink;
-    return sink;
+    const file_sink_t *fs = (file_sink_t*) sink;
+
+    fwrite(data->data, sizeof(triple_t), data->size*data->width, fs->file);
+}
+
+
+sink_t *create_file_sink(const char* path)
+{
+    file_sink_t *sink = malloc(sizeof(file_sink_t));
+    sink->sink.buffer = (data_t) {NULL, 0, 1};
+
+    if (path) { // There is a path so we write to a file
+        sink->file = fopen(path, "wb");
+
+        assert(sink->file);
+
+        sink->sink.push_next = push_next_fsink_write;
+    }
+    else { // There is no path so we erase the data
+        sink->sink.push_next = push_next_fsink;
+    }
+
+    return (sink_t*) sink;
 }
 
 void free_file_source(source_t *source)
@@ -99,11 +119,15 @@ void free_file_source(source_t *source)
 
 void free_file_sink(sink_t *sink)
 {
-    assert(sink->buffer.data);
+    file_sink_t* fsink = (file_sink_t*) sink;
 
-    free(sink->buffer.data);
-    sink->buffer.data = NULL;
+    assert(fsink->sink.buffer.data);
 
-    free(sink);
-    sink = NULL;
+    free(fsink->sink.buffer.data);
+    fsink->sink.buffer.data = NULL;
+
+    fclose(fsink->file);
+
+    free(fsink);
+    fsink = NULL;
 }

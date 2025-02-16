@@ -57,7 +57,7 @@ namespace
 
         source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
         source_t *source2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
-        sink_t *sink = create_file_sink();
+        sink_t *sink = create_file_sink(nullptr);
 
         window_params_t wparams = {window_size, window_size, source1};
         operator_t window_op1 = {
