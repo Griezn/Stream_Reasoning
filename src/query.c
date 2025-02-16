@@ -31,6 +31,24 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
 }
 
 
+void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_join_params_t param)
+{
+    const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
+    out->data = malloc(size * sizeof(triple_t));
+    assert(out->data);
+    out->size = 0;
+    out->width = in1->width + in2->width;
+
+    for (uint32_t i = 0; i < in1->size*in2->width; i += in1->width) {
+        for (uint32_t j = 0; j < in2->size*in2->width; j += in2->width) {
+            if (prob_check(param.probability)) {
+                join_triple_copy(in1, i, in2, j, out);
+            }
+        }
+    }
+}
+
+
 /// The filter operator
 /// @param in The input stream to be filtered
 /// @param out The filtered output stream
@@ -91,7 +109,7 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-bool execute_operator(const operator_t *operator_, const data_t *in, data_t *out);
+bool execute_operator(const operator_t *operator, const data_t *in, data_t *out);
 void *execute_operator_thread(void *arg) {
     const operator_thread_arg_t *targ = arg;
     bool *return_value = malloc(sizeof(bool));
@@ -111,6 +129,7 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 
     switch (operator->type) {
         case JOIN:
+        case CARTESIAN:
             assert(operator->left);
             assert(operator->right);
 
@@ -120,7 +139,10 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
             if (!left_bool || !right_bool)
                 return false;
 
-            join(&tmpo1, &tmpo2, out, operator->params.join);
+            if (operator->type == JOIN)
+                join(&tmpo1, &tmpo2, out, operator->params.join);
+            else
+                cart_join(&tmpo1, &tmpo2, out, operator->params.cart_join); //TODO: test
 
             free(tmpo2.data);
             tmpo2.data = NULL;

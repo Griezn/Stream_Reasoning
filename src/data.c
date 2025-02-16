@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 void join_triple_copy(const data_t *src1, const uint32_t index1,
                         const data_t *src2, const uint32_t index2, data_t *dest)
@@ -81,6 +82,12 @@ bool select_check(const data_t *src, const uint32_t index, const select_params_t
             return true;
     }
     return false;
+}
+
+
+bool prob_check(const double probability)
+{
+    return (double) rand() / (double) RAND_MAX < probability;
 }
 
 

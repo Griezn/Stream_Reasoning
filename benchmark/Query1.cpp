@@ -54,6 +54,7 @@ namespace
     {
         // Extract window parameters from the benchmark state
         uint32_t window_size = state.range(0);
+        double prob = 8.f/static_cast<double>(window_size);
 
         source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
         source_t *source2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
@@ -137,15 +138,14 @@ namespace
             .params = {.select = {.width = 2, .size = 1, .colums = predicates}}
         };
 
-        join_check_t cond_main[1] = {cartesian_join};
-        operator_t join_main = {
-            .type = JOIN,
+        operator_t cart_join_main = {
+            .type = CARTESIAN,
             .left = &select_attr1,
             .right = &select_attr2,
-            .params = {.join = {.size = 1, .checks = cond_main}}
+            .params = {.cart_join = {.probability = prob}}
         };
 
-        query_t query = {.root = &join_main};
+        query_t query = {.root = &cart_join_main};
 
         for (auto _ : state) {
             execute_query(&query, sink);

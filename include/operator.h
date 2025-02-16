@@ -11,6 +11,7 @@
 
 enum OPERATORS {
     JOIN,
+    CARTESIAN,
     FILTER,
     WINDOW,
     SELECT
@@ -24,6 +25,10 @@ typedef struct JoinParams {
     uint8_t      size;
     join_check_t *checks;
 } join_params_t;
+
+typedef struct CartJoinParams {
+    double  probability;
+} cart_join_params_t;
 
 typedef struct FilterParams {
     uint8_t size;
@@ -43,10 +48,11 @@ typedef struct WindowParams {
 } window_params_t;
 
 typedef union Parameters {
-    struct JoinParams    join;
-    struct FilterParams  filter;
-    struct SelectParams  select;
-    struct WindowParams  window;
+    struct JoinParams       join;
+    struct CartJoinParams   cart_join;
+    struct FilterParams     filter;
+    struct SelectParams     select;
+    struct WindowParams     window;
 } parameter_t;
 
 typedef struct Operator {

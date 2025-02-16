@@ -36,4 +36,6 @@ bool filter_check(const data_t *src, uint32_t index, filter_params_t check);
 
 bool select_check(const data_t *src, uint32_t index, select_params_t param);
 
+bool prob_check(double probability);
+
 #endif //QUERY_H

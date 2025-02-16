@@ -95,6 +95,7 @@ namespace
     {
         // Extract window parameters from the benchmark state
         uint32_t window_size = state.range(0);
+        double prob = 8.f/static_cast<double>(window_size);
 
         source_t *tsource = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
         source_t *wsource = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 9);
@@ -272,15 +273,14 @@ namespace
         };
 
         // MAIN JOIN
-        join_check_t cond_main[1] = {cartesian_join};
-        operator_t join_main = {
-            .type = JOIN,
-            .left = &join_temp_hum_wspd,
-            .right = &join_traffic,
-            .params = {.join = {.size = 1, .checks = cond_main}}
+        operator_t cart_join_main = {
+            .type = CARTESIAN,
+            .left = &select_attr1,
+            .right = &select_attr2,
+            .params = {.cart_join = {.probability = prob}}
         };
 
-        query_t query = {.root = &join_main};
+        query_t query = {.root = &cart_join_main};
 
         for (auto _ : state) {
             execute_query(&query, sink);
