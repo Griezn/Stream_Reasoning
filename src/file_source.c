@@ -73,10 +73,12 @@ source_t *create_file_source(const char *filename, const uint8_t consumers)
 
 void push_next_fsink(sink_t *sink, const data_t *data)
 {
-    if (sink->buffer.data)
-        free(sink->buffer.data);
+    file_sink_t *fs = (file_sink_t*) sink;
 
-    sink->buffer = *data;
+    if (fs->sink.buffer.data)
+        free(fs->sink.buffer.data);
+
+    fs->sink.buffer = *data;
 }
 
 
@@ -101,6 +103,7 @@ sink_t *create_file_sink(const char* path)
         sink->sink.push_next = push_next_fsink_write;
     }
     else { // There is no path so we erase the data
+        sink->file = NULL;
         sink->sink.push_next = push_next_fsink;
     }
 
@@ -126,7 +129,8 @@ void free_file_sink(sink_t *sink)
     free(fsink->sink.buffer.data);
     fsink->sink.buffer.data = NULL;
 
-    fclose(fsink->file);
+    if (fsink->file)
+        fclose(fsink->file);
 
     free(fsink);
     fsink = NULL;
