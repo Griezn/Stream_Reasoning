@@ -1,29 +1,49 @@
 import json
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-# Load JSON data from file
-file_path = "results.json"
-with open(file_path, 'r') as file:
+# Load the JSON data
+file_path = "results.json"  # Update with the correct file path
+with open(file_path, "r") as file:
     data = json.load(file)
 
-# Extract benchmark names and real times
+# Extract benchmarks
 benchmarks = data["benchmarks"]
-names = [b["name"] for b in benchmarks]
-real_times = np.array([b["real_time"] for b in benchmarks])
 
-# Normalize times so the lowest value is 1
-min_time = np.min(real_times)
-normalized_times = real_times / min_time
+# Organize data by query
+queries = {}
+for entry in benchmarks:
+    name_parts = entry["name"].split("/")
+    query_name = name_parts[0]
+    window_size = int(name_parts[1].split("_")[0])
+    metric = name_parts[1].split("_")[1]
 
-# Plot
-plt.figure(figsize=(10, 6))
-plt.plot(names, normalized_times, marker='o', linestyle='-', color='skyblue', label='Normalized Execution Time')
-plt.axhline(y=1, color='r', linestyle='dotted', label='Baseline (1.0)')
-plt.xlabel("Benchmark")
-plt.ylabel("Normalized Execution Time")
-plt.title("Normalized Execution Time of Benchmarks")
-plt.xticks(rotation=45, ha='right')
-plt.legend()
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.show()
+    if query_name not in queries:
+        queries[query_name] = {}
+
+    if window_size not in queries[query_name]:
+        queries[query_name][window_size] = {}
+
+    queries[query_name][window_size][metric] = entry["real_time"]
+
+# Create plots
+for query, results in queries.items():
+    window_sizes = sorted(results.keys())
+    execution_times = np.array([results[w]["mean"] for w in window_sizes])
+    std_devs = np.array([results[w]["stddev"] for w in window_sizes])
+
+    # Normalize execution times
+    min_time = np.min(execution_times)
+    norm_execution_times = execution_times / min_time
+    norm_std_devs = std_devs / min_time
+
+    # Plot
+    plt.figure(figsize=(8, 5))
+    plt.errorbar(window_sizes, norm_execution_times, yerr=norm_std_devs, fmt='-o', capsize=5, label=query)
+    plt.xscale('log', base=2)
+    plt.xlabel("Batch Size")
+    plt.ylabel("Normalized Execution Time")
+    plt.title(f"Execution Time vs Batch Size for {query}")
+    plt.legend()
+    plt.grid(True)
+    plt.show()

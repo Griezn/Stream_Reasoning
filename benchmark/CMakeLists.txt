@@ -12,12 +12,13 @@ include_directories(../include)
 
 add_executable(
         SR_BENCH
-        QueryBenchmarks.cpp
         data/traffic_data.hpp
         Query1.cpp
         query2.cpp
         data/weather_data.hpp
         default_checks.hpp
+        Query7.cpp
+        data/parking_data.hpp
 )
 
 target_link_libraries(SR_BENCH SR benchmark::benchmark benchmark::benchmark_main)
