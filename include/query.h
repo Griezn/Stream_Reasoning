@@ -10,6 +10,19 @@
 #include <stdint.h>
 
 
+typedef struct ExecutionStep {
+    const operator_t *operator_;
+    data_t *left_input;
+    data_t *right_input;
+    data_t *output;
+} step_t;
+
+#define MAX_OPERATOR_COUNT 256 //uint8_t
+
+typedef struct ExecutionPlan {
+    struct ExecutionStep *steps;
+    uint8_t num_steps;
+} plan_t;
 
 typedef struct Query {
     struct Operator *root;
@@ -23,6 +36,8 @@ typedef struct {
 
 
 void execute_query(const query_t *query, sink_t *sink);
+
+void flatten_query(const operator_t* operator_, data_t *results, uint8_t index, plan_t *plan);
 
 void join_triple_copy(const data_t *src1, uint32_t index1,
                     const data_t *src2, uint32_t index2, data_t *dest);

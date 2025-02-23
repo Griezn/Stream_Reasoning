@@ -34,8 +34,6 @@ add_library(SR STATIC
         src/data.c
         include/file_source.h
         src/file_source.c
-        include/mutli_source.h
-        src/multi_source.c
         include/operator.h
         include/memory.h
         src/memory.c
