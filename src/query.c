@@ -72,9 +72,6 @@ bool window(data_t *out, const window_params_t params)
         return false;
 
     *out = *data;
-    const uint32_t size = out->size * out->width * sizeof(triple_t);
-    out->data = malloc(size);
-    memcpy(out->data, data->data, size);
     free(data);
     return true;
 }
@@ -101,29 +98,30 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 
 bool execute_plan(const plan_t *plan, data_t **out)
 {
-    for (uint8_t i = 0; i < plan->num_steps; ++i) {
+    for (int8_t i = plan->num_steps - 1; i >= 0; --i) {
         const step_t *step = &plan->steps[i];
         const operator_t *op = step->operator_;
         const data_t *left_input = step->left_input;
         const data_t *right_input = step->right_input;
         data_t *output = step->output;
 
+
         switch (op->type) {
             case JOIN:
                 join(left_input, right_input, output, op->params.join);
-                free(left_input->data);
-                free(right_input->data);
+                if (op->left->type != WINDOW) free(left_input->data);
+                if (op->right->type != WINDOW) free(right_input->data);
             break;
 
             case CARTESIAN:
                 cart_join(left_input, right_input, output, op->params.cart_join);
-                free(left_input->data);
-                free(right_input->data);
+                if (op->left->type != WINDOW) free(left_input->data);
+                if (op->right->type != WINDOW) free(right_input->data);
             break;
 
             case FILTER:
                 filter(left_input, output, op->params.filter);
-                free(left_input->data);
+                if (op->left->type != WINDOW) free(left_input->data);
             break;
 
             case WINDOW:
@@ -132,12 +130,12 @@ bool execute_plan(const plan_t *plan, data_t **out)
 
             case SELECT:
                 select_query(left_input, output, op->params.select);
-                free(left_input->data);
+                if (op->left->type != WINDOW) free(left_input->data);
             break;
         }
     }
 
-    *out = plan->steps[plan->num_steps - 1].output;
+    *out = plan->steps[0].output;
     return true;
 }
 
@@ -153,12 +151,11 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
     data_t *left_input = operator_->left ? &results[next_index_l] : NULL;
     data_t *right_input = operator_->right ? &results[next_index_r] : NULL;
 
-    if (operator_->left) flatten_query(operator_->left, results, next_index_l, plan);
-    if (operator_->right) flatten_query(operator_->right, results, next_index_r, plan);
-
     const step_t step = {operator_, left_input, right_input, output};
     plan->steps[plan->num_steps++] = step;
 
+    if (operator_->left) flatten_query(operator_->left, results, next_index_l, plan);
+    if (operator_->right) flatten_query(operator_->right, results, next_index_r, plan);
 }
 
 
