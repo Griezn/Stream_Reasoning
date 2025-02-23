@@ -37,6 +37,8 @@ add_library(SR STATIC
         include/mutli_source.h
         src/multi_source.c
         include/operator.h
+        include/memory.h
+        src/memory.c
 )
 
 enable_testing()

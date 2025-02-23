@@ -3,9 +3,13 @@
 //
 #include "query.h"
 #include "data.h"
+#include "memory.h"
 
 #include <assert.h>
 #include <stdlib.h>
+
+#define malloc(size) tracked_malloc(size)
+#define free(ptr, size) tracked_free(ptr, size)
 
 
 /// The join operator
@@ -81,7 +85,7 @@ bool window(data_t *out, const window_params_t params)
         return false;
 
     *out = *data;
-    free(data);
+    free(data, data->size * data->width);
     return true;
 }
 
@@ -144,7 +148,7 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
             else
                 cart_join(&tmpo1, &tmpo2, out, operator->params.cart_join); //TODO: test
 
-            free(tmpo2.data);
+            free(tmpo2.data, tmpo2.size * tmpo2.width);
             tmpo2.data = NULL;
             break;
         case FILTER:
@@ -181,7 +185,7 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
         if (operator->left->type == WINDOW)
             return true;
 
-        free(tmpo1.data);
+        free(tmpo1.data, tmpo1.size * tmpo1.width);
         tmpo1.data = NULL;
     }
 

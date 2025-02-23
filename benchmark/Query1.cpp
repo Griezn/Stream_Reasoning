@@ -27,6 +27,7 @@ where {
 }}
 */
 
+#include <iostream>
 #include <benchmark/benchmark.h>
 
 #include "data/traffic_data.hpp"
@@ -36,6 +37,7 @@ using namespace traffic_data; // Because it is the only namespace we use
 extern "C" {
     #include "query.h"
     #include "file_source.h"
+    #include "memory.h"
 }
 
 namespace
@@ -148,8 +150,15 @@ namespace
         query_t query = {.root = &cart_join_main};
 
         for (auto _ : state) {
+            reset_memory_counter();
             execute_query(&query, sink);
+            reset_file_source(source1);
+            reset_file_source(source2);
         }
+
+        state.counters["Allocs"] = (double) get_alloc_count();
+        state.counters["Peak"] = (double) get_peak_allocated();
+        state.counters["Total"] = (double) get_total_allocated();
 
         free_file_source(source1);
         free_file_source(source2);
