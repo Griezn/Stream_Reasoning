@@ -55,7 +55,7 @@ TEST(bench_tests, QUERY1)
             .type = FILTER,
             .left = &window_op1,
             .right = nullptr,
-            .params = {.filter = {.size = 1, avg_speed_check}}
+            .params = {.filter = {.size = 1, .checks = avg_speed_check}}
         };
 
         filter_check_t has_simple_res_check[1] = {check_has_simple_res};
@@ -63,7 +63,7 @@ TEST(bench_tests, QUERY1)
             .type = FILTER,
             .left = &window_op1,
             .right = nullptr,
-            .params = {.filter = {.size = 1, has_simple_res_check}}
+            .params = {.filter = {.size = 1, .checks = has_simple_res_check}}
         };
 
         join_check_t cond[1] = {natural_join};
@@ -79,14 +79,14 @@ TEST(bench_tests, QUERY1)
             .type = FILTER,
             .left = &window_op2,
             .right = nullptr,
-            .params = {.filter = {.size = 1, avg_speed_check}}
+            .params = {.filter = {.size = 1, .checks = avg_speed_check}}
         };
 
         operator_t filter_has_simple_res2 = {
             .type = FILTER,
             .left = &window_op2,
             .right = nullptr,
-            .params = {.filter = {.size = 1, has_simple_res_check}}
+            .params = {.filter = {.size = 1, .checks = has_simple_res_check}}
         };
 
         operator_t join_stream2 = {
