@@ -140,8 +140,17 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
             bool left_bool = execute_operator(operator->left, in, &tmpo1);
             bool right_bool = execute_operator(operator->right, in, &tmpo2);
 
-            if (!left_bool || !right_bool)
+            if (!left_bool || !right_bool) {
+                if (tmpo1.data && tmpo1.data != in->data)
+                    free(tmpo1.data, tmpo1.size*tmpo1.width);
+
+                if (tmpo2.data)
+                    free(tmpo2.data, tmpo2.size*tmpo2.width);
+
+                tmpo1.data = NULL;
+                tmpo2.data = NULL;
                 return false;
+            }
 
             if (operator->type == JOIN)
                 join(&tmpo1, &tmpo2, out, operator->params.join);
