@@ -71,6 +71,16 @@ source_t *create_file_source(const char *filename, const uint8_t consumers)
     return  (source_t*) fs;
 }
 
+
+void reset_file_source(source_t *source)
+{
+    file_source_t *fs = (file_source_t*) source;
+
+    fs->source.index = 0;
+    fs->source.consumed = 0;
+}
+
+
 void push_next_fsink(sink_t *sink, const data_t *data)
 {
     file_sink_t *fs = (file_sink_t*) sink;
