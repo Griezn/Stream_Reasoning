@@ -157,7 +157,6 @@ namespace
         }
 
         state.counters["Allocs"] = (double) get_alloc_count();
-        state.counters["Peak"] = (double) get_peak_allocated();
         state.counters["Total"] = (double) get_total_allocated();
 
         free_file_source(source1);

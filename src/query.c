@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #define malloc(size) tracked_malloc(size)
-#define free(ptr, size) tracked_free(ptr, size)
 
 
 /// The join operator
