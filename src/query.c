@@ -15,8 +15,7 @@
 void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t param)
 {
     const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
@@ -33,8 +32,7 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
 void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_join_params_t param)
 {
     const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
@@ -51,8 +49,7 @@ void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_joi
 void filter(const data_t *in, data_t *out, const filter_params_t param)
 {
     const uint32_t size = in->size * in->width;
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in->width;
 
@@ -81,7 +78,7 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 {
     // TODO: add extra test for double occurences in 1 row
     const uint32_t size = in->size * param.width;
-    out->data = malloc(size * sizeof(triple_t));
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = in->size;
     out->width = param.width;
     uint32_t out_idx = 0;
@@ -99,27 +96,31 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 bool execute_plan(const plan_t *plan, data_t **out)
 {
     for (int8_t i = plan->num_steps - 1; i >= 0; --i) {
-        const step_t *step = &plan->steps[i];
-        const operator_t *op = step->operator_;
+        const step_t *step = &plan->steps[i]; assert(step);
+        const operator_t *op = step->operator_; assert(op);
         const data_t *left_input = step->left_input;
         const data_t *right_input = step->right_input;
         data_t *output = step->output;
 
-
         switch (op->type) {
             case JOIN:
+                assert(left_input);
+                assert(right_input);
                 join(left_input, right_input, output, op->params.join);
                 if (op->left->type != WINDOW) free(left_input->data);
                 if (op->right->type != WINDOW) free(right_input->data);
             break;
 
             case CARTESIAN:
+                assert(left_input);
+                assert(right_input);
                 cart_join(left_input, right_input, output, op->params.cart_join);
                 if (op->left->type != WINDOW) free(left_input->data);
                 if (op->right->type != WINDOW) free(right_input->data);
             break;
 
             case FILTER:
+                assert(left_input);
                 filter(left_input, output, op->params.filter);
                 if (op->left->type != WINDOW) free(left_input->data);
             break;
@@ -129,20 +130,21 @@ bool execute_plan(const plan_t *plan, data_t **out)
             break;
 
             case SELECT:
+                assert(left_input);
                 select_query(left_input, output, op->params.select);
                 if (op->left->type != WINDOW) free(left_input->data);
             break;
         }
     }
 
-    *out = plan->steps[0].output;
+    *out = plan->steps[0].output; assert(out);
     return true;
 }
 
 
 void flatten_query(const operator_t* operator_, data_t *results, const uint8_t index, plan_t *plan)
 {
-    assert(operator_);
+    assert(operator_); assert(results); assert(plan);
 
     data_t *output = &results[index];
 
@@ -162,8 +164,7 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
 void init_plan(plan_t *plan)
 {
     plan->num_steps = 0;
-    plan->steps = malloc(MAX_OPERATOR_COUNT * sizeof(step_t));
-    assert(plan->steps);
+    plan->steps = malloc(MAX_OPERATOR_COUNT * sizeof(step_t)); assert(plan->steps);
 }
 
 
@@ -177,8 +178,7 @@ void execute_query(const query_t *query, sink_t *sink)
 
     // Max number of operators (256)
     // 3: left input, right input, output
-    data_t *results = malloc(MAX_OPERATOR_COUNT * 3 * sizeof(data_t));
-    assert(results);
+    data_t *results = malloc(MAX_OPERATOR_COUNT * 3 * sizeof(data_t)); assert(results);
 
     flatten_query(query->root, results, 0, &plan);
 
