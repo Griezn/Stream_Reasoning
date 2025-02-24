@@ -13,7 +13,7 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" , "Griezn-code-analysis"]
   pull_request:
     branches: [ "main" ]
   schedule:
