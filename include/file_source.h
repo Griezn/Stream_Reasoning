@@ -26,4 +26,6 @@ void free_file_source(source_t *source);
 
 void free_file_sink(sink_t *sink);
 
+void reset_file_source(source_t *source); //TODO: add for the source in general
+
 #endif //FILE_SOURCE_H

@@ -25,7 +25,7 @@ data_t *get_next_file(const source_t *source, const uint32_t size, const uint32_
     data_t *data = malloc(sizeof(data_t));
     assert(data);
     data->data = fs->source.buffer.data + (fs->source.index * fs->source.buffer.width);
-    data->size = min(size, fs->source.buffer.size - fs->source.index);
+    data->size = MIN(size, fs->source.buffer.size - fs->source.index);
     data->width = source->buffer.width;
 
     if (++fs->source.consumed == fs->source.consumers) {
@@ -70,6 +70,16 @@ source_t *create_file_source(const char *filename, const uint8_t consumers)
 
     return  (source_t*) fs;
 }
+
+
+void reset_file_source(source_t *source)
+{
+    file_source_t *fs = (file_source_t*) source;
+
+    fs->source.index = 0;
+    fs->source.consumed = 0;
+}
+
 
 void push_next_fsink(sink_t *sink, const data_t *data)
 {

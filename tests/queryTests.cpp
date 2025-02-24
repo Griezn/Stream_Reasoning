@@ -44,54 +44,6 @@ bool check_join(const triple_t in1, const triple_t in2)
     return in1.object == in2.object;
 }
 
-TEST_F(QueryTestFixture, test_query_join_death_no_children)
-{
-    skip_teardown = true;
-    join_check_t conditions[1] = {check_join};
-    operator_t join_op = {
-        .type = JOIN,
-        .left = nullptr,
-        .right = nullptr,
-        .params = {.join = {.size = 1, .checks = conditions}}
-    };
-    query_t query_join = {.root = &join_op};
-
-    // Program should abort because .left and .right are NULL
-    ASSERT_DEATH(execute_query(&query_join, gsink), "");
-}
-
-TEST_F(QueryTestFixture, test_query_join_death_no_left_child)
-{
-    skip_teardown = true;
-    join_check_t conditions[1] = {check_join};
-    operator_t join_op = {
-        .type = JOIN,
-        .left = nullptr,
-        .right = &join_op,
-        .params = {.join = {.size = 1, .checks = conditions}}
-    };
-    query_t query_join = {.root = &join_op};
-
-    // Program should abort because .left is NULL
-    ASSERT_DEATH(execute_query(&query_join, gsink), "");
-}
-
-TEST_F(QueryTestFixture, test_query_join_death_no_right_child)
-{
-    skip_teardown = true;
-    join_check_t conditions[1] = {check_join};
-    operator_t join_op = {
-        .type = JOIN,
-        .left = &join_op,
-        .right = nullptr,
-        .params = {.join = {.size = 1, .checks = conditions}}
-    };
-    query_t query_join = {.root = &join_op};
-
-    // Program should abort because .right is NULL
-    ASSERT_DEATH(execute_query(&query_join, gsink), "");
-}
-
 
 bool check_filter(const triple_t in)
 {

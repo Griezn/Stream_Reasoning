@@ -7,21 +7,17 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "utils.h"
 
 #define malloc(size) tracked_malloc(size)
-#define free(ptr, size) tracked_free(ptr, size)
 
 
-/// The join operator
-/// @param in1 The first input stream to be joined
-/// @param in2 The second input stream to be joined
-/// @param out The output stream containing matching from the first and hte second stream
-/// @param param Join parameters containing a function ptr specifying the join condition
 void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t param)
 {
     const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
@@ -38,8 +34,7 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
 void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_join_params_t param)
 {
     const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in1->width + in2->width;
 
@@ -53,16 +48,10 @@ void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_joi
 }
 
 
-/// The filter operator
-/// @param in The input stream to be filtered
-/// @param out The filtered output stream
-/// @param param The filter parameters containing a function ptr specifying the filter condition
-/// @note The out buffer will likely be larger than the out->size
 void filter(const data_t *in, data_t *out, const filter_params_t param)
 {
     const uint32_t size = in->size * in->width;
-    out->data = malloc(size * sizeof(triple_t));
-    assert(out->data);
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = 0;
     out->width = in->width;
 
@@ -74,9 +63,6 @@ void filter(const data_t *in, data_t *out, const filter_params_t param)
 }
 
 
-/// The window operator creates a copy of the input stream in a newly specified size
-/// @param out A selection of the input stream
-/// @param params The window parameter
 bool window(data_t *out, const window_params_t params)
 {
     data_t* data = params.source->get_next(params.source, params.size, params.step);
@@ -85,20 +71,16 @@ bool window(data_t *out, const window_params_t params)
         return false;
 
     *out = *data;
-    free(data, data->size * data->width);
+    free(data);
     return true;
 }
 
 
-/// Performs a column selection on a stream
-/// @param in The input stream
-/// @param out The input stream with only the triples having one of the specified predicates
-/// @param param The select parameter containing an array with the wanted predicates
 void select_query(const data_t *in, data_t *out, const select_params_t param)
 {
     // TODO: add extra test for double occurences in 1 row
     const uint32_t size = in->size * param.width;
-    out->data = malloc(size * sizeof(triple_t));
+    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
     out->size = in->size;
     out->width = param.width;
     uint32_t out_idx = 0;
@@ -113,92 +95,80 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-bool execute_operator(const operator_t *operator, const data_t *in, data_t *out);
-void *execute_operator_thread(void *arg) {
-    const operator_thread_arg_t *targ = arg;
-    bool *return_value = malloc(sizeof(bool));
-    *return_value = execute_operator(targ->operator_, targ->in, targ->out);
-    return return_value;
+bool execute_plan(const plan_t *plan, data_t **out)
+{
+    for (int8_t i = plan->num_steps - 1; i >= 0; --i) {
+        if(plan->steps[i].operator_ == NULL) continue;
+        const step_t *step = &plan->steps[i]; assert(step);
+        const operator_t *op = step->operator_; assert(op);
+        const data_t *left_input = step->left_input;
+        const data_t *right_input = step->right_input;
+        data_t *output = step->output;
+
+        switch (op->type) {
+            case JOIN:
+                assert(left_input);
+                assert(right_input);
+                join(left_input, right_input, output, op->params.join);
+                if (op->left->type != WINDOW) free(left_input->data);
+                if (op->right->type != WINDOW) free(right_input->data);
+            break;
+
+            case CARTESIAN:
+                assert(left_input);
+                assert(right_input);
+                cart_join(left_input, right_input, output, op->params.cart_join);
+                if (op->left->type != WINDOW) free(left_input->data);
+                if (op->right->type != WINDOW) free(right_input->data);
+            break;
+
+            case FILTER:
+                assert(left_input);
+                filter(left_input, output, op->params.filter);
+                if (op->left->type != WINDOW) free(left_input->data);
+            break;
+
+            case WINDOW:
+                if (!window(output, op->params.window)) return false;
+            break;
+
+            case SELECT:
+                assert(left_input);
+                select_query(left_input, output, op->params.select);
+                if (op->left->type != WINDOW) free(left_input->data);
+            break;
+        }
+    }
+
+    *out = plan->steps[0].output; assert(out);
+    return true;
 }
 
 
-/// This function executed the right operator
-/// @param operator The operator to be executed
-/// @param in The input stream
-/// @param out The output stream
-bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
+void flatten_query(const operator_t* operator_, data_t *results, const uint8_t index, plan_t *plan)
 {
-    data_t tmpo1 = *in;
-    data_t tmpo2 = {NULL, 0, 1};
+    assert(operator_); assert(results); assert(plan);
 
-    switch (operator->type) {
-        case JOIN:
-        case CARTESIAN:
-            assert(operator->left);
-            assert(operator->right);
+    data_t *output = &results[index];
 
-            bool left_bool = execute_operator(operator->left, in, &tmpo1);
-            bool right_bool = execute_operator(operator->right, in, &tmpo2);
+    const uint8_t next_index_l = 2*index + 1;
+    const uint8_t next_index_r = 2*index + 2;
+    data_t *left_input = operator_->left ? &results[next_index_l] : NULL;
+    data_t *right_input = operator_->right ? &results[next_index_r] : NULL;
 
-            if (!left_bool || !right_bool) {
-                if (tmpo1.data && tmpo1.data != in->data)
-                    free(tmpo1.data, tmpo1.size*tmpo1.width);
+    const step_t step = {operator_, left_input, right_input, output};
+    plan->steps[index] = step;
+    plan->num_steps = MAX(plan->num_steps, index+1);
 
-                if (tmpo2.data)
-                    free(tmpo2.data, tmpo2.size*tmpo2.width);
-
-                tmpo1.data = NULL;
-                tmpo2.data = NULL;
-                return false;
-            }
-
-            if (operator->type == JOIN)
-                join(&tmpo1, &tmpo2, out, operator->params.join);
-            else
-                cart_join(&tmpo1, &tmpo2, out, operator->params.cart_join); //TODO: test
-
-            free(tmpo2.data, tmpo2.size * tmpo2.width);
-            tmpo2.data = NULL;
-            break;
-        case FILTER:
-            if (operator->left) {
-                if(!execute_operator(operator->left, in, &tmpo1))
-                    return false;
-            }
-
-            filter(&tmpo1, out, operator->params.filter);
-            break;
-        case WINDOW:
-            if (operator->left) {
-                if(!execute_operator(operator->left, in, &tmpo1))
-                    return false;
-            }
-
-            if (!window(out, operator->params.window))
-                return false;
-
-            break;
-        case SELECT:
-            if (operator->left) {
-                if(!execute_operator(operator->left, in, &tmpo1))
-                    return false;
-            }
-
-            select_query(&tmpo1, out, operator->params.select);
-            break;
-    }
+    if (operator_->left) flatten_query(operator_->left, results, next_index_l, plan);
+    if (operator_->right) flatten_query(operator_->right, results, next_index_r, plan);
+}
 
 
-    if (tmpo1.data != in->data) {
-        assert(operator->left);
-        if (operator->left->type == WINDOW)
-            return true;
-
-        free(tmpo1.data, tmpo1.size * tmpo1.width);
-        tmpo1.data = NULL;
-    }
-
-    return true;
+void init_plan(plan_t *plan)
+{
+    plan->num_steps = 0;
+    plan->steps = calloc(MAX_OPERATOR_COUNT, sizeof(step_t)); assert(plan->steps);
 }
 
 
@@ -207,9 +177,20 @@ bool execute_operator(const operator_t *operator, const data_t *in, data_t *out)
 /// @param sink The sink consuming the output stream
 void execute_query(const query_t *query, sink_t *sink)
 {
-    data_t data = {NULL, 0, 1};
+    plan_t plan;
+    init_plan(&plan);
 
-    while (execute_operator(query->root, &data, &data)) {
-        sink->push_next(sink, &data);
+    // Max number of operators (256)
+    // 3: left input, right input, output
+    data_t *results = malloc(MAX_OPERATOR_COUNT * 3 * sizeof(data_t)); assert(results);
+
+    flatten_query(query->root, results, 0, &plan);
+
+    data_t *out = NULL;
+    while (execute_plan(&plan, &out)) {
+        sink->push_next(sink, out);
     }
+
+    free(plan.steps);
+    free(results);
 }
