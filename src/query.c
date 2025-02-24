@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "utils.h"
+
 #define malloc(size) tracked_malloc(size)
 
 
@@ -96,6 +98,7 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 bool execute_plan(const plan_t *plan, data_t **out)
 {
     for (int8_t i = plan->num_steps - 1; i >= 0; --i) {
+        if(plan->steps[i].operator_ == NULL) continue;
         const step_t *step = &plan->steps[i]; assert(step);
         const operator_t *op = step->operator_; assert(op);
         const data_t *left_input = step->left_input;
@@ -154,7 +157,8 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
     data_t *right_input = operator_->right ? &results[next_index_r] : NULL;
 
     const step_t step = {operator_, left_input, right_input, output};
-    plan->steps[plan->num_steps++] = step;
+    plan->steps[index] = step;
+    plan->num_steps = MAX(plan->num_steps, index+1);
 
     if (operator_->left) flatten_query(operator_->left, results, next_index_l, plan);
     if (operator_->right) flatten_query(operator_->right, results, next_index_r, plan);
@@ -164,7 +168,7 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
 void init_plan(plan_t *plan)
 {
     plan->num_steps = 0;
-    plan->steps = malloc(MAX_OPERATOR_COUNT * sizeof(step_t)); assert(plan->steps);
+    plan->steps = calloc(MAX_OPERATOR_COUNT, sizeof(step_t)); assert(plan->steps);
 }
 
 

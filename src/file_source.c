@@ -25,7 +25,7 @@ data_t *get_next_file(const source_t *source, const uint32_t size, const uint32_
     data_t *data = malloc(sizeof(data_t));
     assert(data);
     data->data = fs->source.buffer.data + (fs->source.index * fs->source.buffer.width);
-    data->size = min(size, fs->source.buffer.size - fs->source.index);
+    data->size = MIN(size, fs->source.buffer.size - fs->source.index);
     data->width = source->buffer.width;
 
     if (++fs->source.consumed == fs->source.consumers) {
