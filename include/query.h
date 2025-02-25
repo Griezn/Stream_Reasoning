@@ -17,11 +17,12 @@ typedef struct ExecutionStep {
     data_t *output;
 } step_t;
 
-#define MAX_OPERATOR_COUNT 256 //uint8_t
+#define MAX_OPERATOR_COUNT 64 //uint8_t
 
 typedef struct ExecutionPlan {
     struct ExecutionStep *steps;
     uint8_t num_steps;
+    uint8_t num_threads;
 } plan_t;
 
 typedef struct Query {

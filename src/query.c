@@ -11,7 +11,7 @@
 
 #include "utils.h"
 
-#define malloc(size) tracked_malloc(size)
+//#define malloc(size) tracked_malloc(size)
 
 
 void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t param)
@@ -95,10 +95,11 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-bool execute_plan(const plan_t *plan, data_t **out)
+bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
 {
-    for (int8_t i = plan->num_steps - 1; i >= 0; --i) {
-        if(plan->steps[i].operator_ == NULL) continue;
+    assert(from > to);
+
+    for (int8_t i = from; i >= to; --i) {
         const step_t *step = &plan->steps[i]; assert(step);
         const operator_t *op = step->operator_; assert(op);
         const data_t *left_input = step->left_input;
@@ -140,8 +141,16 @@ bool execute_plan(const plan_t *plan, data_t **out)
         }
     }
 
-    *out = plan->steps[0].output; assert(out);
     return true;
+}
+
+
+bool execute_plan(const plan_t *plan, data_t **out)
+{
+    const bool res = execute_steps(plan, plan->num_steps-1, 0);
+
+    *out = plan->steps[0].output; assert(out); assert((*out)->data);
+    return res;
 }
 
 
@@ -149,38 +158,34 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
 {
     assert(operator_); assert(results); assert(plan);
 
+    plan->num_steps++;
+
+    if (operator_->left) flatten_query(operator_->left, results, index+1, plan);
+
     data_t *output = &results[index];
+    data_t *left_input = operator_->left ? &results[index+1] : NULL;
+    data_t *right_input = operator_->right ? &results[plan->num_steps] : NULL;
 
-    const uint8_t next_index_l = 2*index + 1;
-    const uint8_t next_index_r = 2*index + 2;
-    data_t *left_input = operator_->left ? &results[next_index_l] : NULL;
-    data_t *right_input = operator_->right ? &results[next_index_r] : NULL;
+    plan->steps[index] = (step_t) {operator_, left_input, right_input, output};
 
-    const step_t step = {operator_, left_input, right_input, output};
-    plan->steps[index] = step;
-    plan->num_steps = MAX(plan->num_steps, index+1);
-
-    if (operator_->left) flatten_query(operator_->left, results, next_index_l, plan);
-    if (operator_->right) flatten_query(operator_->right, results, next_index_r, plan);
+    if (operator_->right) flatten_query(operator_->right, results, plan->num_steps, plan);
 }
 
 
 void init_plan(plan_t *plan)
 {
     plan->num_steps = 0;
+    plan->num_threads = 0;
     plan->steps = calloc(MAX_OPERATOR_COUNT, sizeof(step_t)); assert(plan->steps);
 }
 
 
-/// This function pulls the data out of the source, runs it through the query and sends it to the sink
-/// @param query The query to be executed
-/// @param sink The sink consuming the output stream
 void execute_query(const query_t *query, sink_t *sink)
 {
     plan_t plan;
     init_plan(&plan);
 
-    // Max number of operators (256)
+    // Max number of operators (64)
     // 3: left input, right input, output
     data_t *results = malloc(MAX_OPERATOR_COUNT * 3 * sizeof(data_t)); assert(results);
 
