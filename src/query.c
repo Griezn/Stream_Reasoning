@@ -97,9 +97,9 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 
 bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
 {
-    assert(from > to);
+    assert(from < to);
 
-    for (int8_t i = from; i >= to; --i) {
+    for (int8_t i = to; i >= from; --i) {
         const step_t *step = &plan->steps[i]; assert(step);
         const operator_t *op = step->operator_; assert(op);
         const data_t *left_input = step->left_input;
@@ -108,16 +108,14 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
 
         switch (op->type) {
             case JOIN:
-                assert(left_input);
-                assert(right_input);
+                assert(left_input); assert(right_input);
                 join(left_input, right_input, output, op->params.join);
                 if (op->left->type != WINDOW) free(left_input->data);
                 if (op->right->type != WINDOW) free(right_input->data);
             break;
 
             case CARTESIAN:
-                assert(left_input);
-                assert(right_input);
+                assert(left_input); assert(right_input);
                 cart_join(left_input, right_input, output, op->params.cart_join);
                 if (op->left->type != WINDOW) free(left_input->data);
                 if (op->right->type != WINDOW) free(right_input->data);
@@ -130,7 +128,16 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
             break;
 
             case WINDOW:
-                if (!window(output, op->params.window)) return false;
+                if (!window(output, op->params.window)) {
+                    // cleanup
+                    if (i+1 <= to) {
+                        const step_t *last_step = &plan->steps[i+1]; assert(step);
+                        const data_t *last_output = last_step->output; assert(last_output->data);
+                        free(last_output->data);
+                    }
+
+                    return false;
+                }
             break;
 
             case SELECT:
@@ -147,7 +154,7 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
 
 bool execute_plan(const plan_t *plan, data_t **out)
 {
-    const bool res = execute_steps(plan, plan->num_steps-1, 0);
+    const bool res = execute_steps(plan, 0, plan->num_steps-1);
 
     *out = plan->steps[0].output; assert(out); assert((*out)->data);
     return res;
@@ -187,7 +194,7 @@ void execute_query(const query_t *query, sink_t *sink)
 
     // Max number of operators (64)
     // 3: left input, right input, output
-    data_t *results = malloc(MAX_OPERATOR_COUNT * 3 * sizeof(data_t)); assert(results);
+    data_t *results = calloc(MAX_OPERATOR_COUNT * 3, sizeof(data_t)); assert(results);
 
     flatten_query(query->root, results, 0, &plan);
 
