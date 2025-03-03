@@ -98,12 +98,16 @@ void handle_quit(const step_t *step)
         step->left_step->ready = false;
         pthread_cond_signal(&step->left_step->cond);
         pthread_mutex_unlock(&step->left_step->mutex);
+        if (step->operator_->left->type != WINDOW && step->left_step->output->data != NULL)
+            free(step->left_step->output->data);
     }
     if (step->right_step) {
         step->right_step->quit = true;
         step->right_step->ready = false;
         pthread_cond_signal(&step->right_step->cond);
         pthread_mutex_unlock(&step->right_step->mutex);
+        if (step->operator_->left->type != WINDOW && step->right_step->output->data != NULL)
+            free(step->right_step->output->data);
     }
 }
 
@@ -172,13 +176,13 @@ void *execute_step(void *arg)
         pthread_mutex_unlock(&step->mutex);
 
         if (left_step) {
-            if (op->left->type != WINDOW) free(left_step->output->data);
+            if (op->left->type != WINDOW) {free(left_step->output->data); left_step->output->data = NULL;}
             left_step->ready = false;
             pthread_cond_signal(&left_step->cond);
             pthread_mutex_unlock(&left_step->mutex);
         }
         if (right_step) {
-            if (op->right->type != WINDOW) free(right_step->output->data);
+            if (op->right->type != WINDOW) {free(right_step->output->data); right_step->output->data = NULL;}
             right_step->ready = false;
             pthread_cond_signal(&right_step->cond);
             pthread_mutex_unlock(&right_step->mutex);
