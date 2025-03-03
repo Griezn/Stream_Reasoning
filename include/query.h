@@ -19,6 +19,7 @@ typedef struct ExecutionStep {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     bool ready;
+    bool quit;
 } step_t;
 
 #define MAX_OPERATOR_COUNT 64 //uint8_t
@@ -26,7 +27,6 @@ typedef struct ExecutionStep {
 typedef struct ExecutionPlan {
     struct ExecutionStep *steps;
     uint8_t num_steps;
-    uint8_t num_threads;
 } plan_t;
 
 typedef struct Query {

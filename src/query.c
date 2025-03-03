@@ -91,16 +91,60 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
+void handle_quit(const step_t *step)
 {
-    assert(from < to);
+    if (step->left_step && step->right_step) {
+        if (step->left_step->quit) {
+            step->right_step->quit = true;
+            step->right_step->ready = false;
+            pthread_cond_signal(&step->right_step->cond);
+            pthread_mutex_unlock(&step->right_step->mutex);
+        }
+        else {
+            step->left_step->quit = true;
+            step->left_step->ready = false;
+            pthread_cond_signal(&step->left_step->cond);
+            pthread_mutex_unlock(&step->left_step->mutex);
+        }
+    }
+    else if (step->left_step) { // ONLY LEFT CHILD
+        step->left_step->quit = true;
+        step->left_step->ready = false;
+        pthread_cond_signal(&step->left_step->cond);
+        pthread_mutex_unlock(&step->left_step->mutex);
+    }
+}
 
-    for (int8_t i = to; i >= from; --i) {
-        const step_t *step = &plan->steps[i]; assert(step);
+
+void *execute_step(void *arg)
+{
+    step_t* step = arg;
+
+    while (true) {
         const operator_t *op = step->operator_; assert(op);
-        const step_t *left_step = step->left_step;
-        const step_t *right_step = step->right_step;
+        step_t *left_step = step->left_step;
+        step_t *right_step = step->right_step;
         data_t *output = step->output;
+
+        pthread_mutex_lock(&step->mutex);
+        while (step->ready) {pthread_cond_wait(&step->cond, &step->mutex);}
+
+        // WAIT FOR CHILD(REN)
+        if (left_step) {
+            pthread_mutex_lock(&left_step->mutex);
+            while (!left_step->ready) {pthread_cond_wait(&left_step->cond, &left_step->mutex);}
+            if (left_step->quit) {
+                step->quit = true;
+            }
+        }
+        if (right_step) {
+            pthread_mutex_lock(&right_step->mutex);
+            while (!right_step->ready) {pthread_cond_wait(&right_step->cond, &right_step->mutex);}
+            if (right_step->quit) {
+                step->quit = true;
+            }
+        }
+        if (step->quit) break;
 
         switch (op->type) {
             case JOIN:
@@ -125,14 +169,8 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
 
             case WINDOW:
                 if (!window(output, op->params.window)) {
-                    // cleanup
-                    if (i+1 <= to) {
-                        const step_t *last_step = &plan->steps[i+1]; assert(step);
-                        const data_t *last_output = last_step->output; assert(last_output->data);
-                        free(last_output->data);
-                    }
-
-                    return false;
+                    step->quit = true;
+                    goto quit;
                 }
             break;
 
@@ -142,18 +180,46 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
                 if (op->left->type != WINDOW) free(left_step->output->data);
             break;
         }
+
+        step->ready = true;
+        pthread_cond_signal(&step->cond);
+        pthread_mutex_unlock(&step->mutex);
+
+        if (left_step) {
+            left_step->ready = false;
+            pthread_cond_signal(&left_step->cond);
+            pthread_mutex_unlock(&left_step->mutex);
+        }
+        if (right_step) {
+            right_step->ready = false;
+            pthread_cond_signal(&right_step->cond);
+            pthread_mutex_unlock(&right_step->mutex);
+        }
     }
 
-    return true;
+    quit:
+    handle_quit(step);
+    step->ready = true;
+    pthread_cond_signal(&step->cond);
+    pthread_mutex_unlock(&step->mutex);
+    return NULL;
 }
 
 
-bool execute_plan(const plan_t *plan, data_t **out)
+void execute_plan(const plan_t *plan, pthread_t *threads)
 {
-    const bool res = execute_steps(plan, 0, plan->num_steps-1);
+    for (int i = 0; i < plan->num_steps; ++i) {
+        pthread_create(&threads[i], NULL, execute_step, &plan->steps[i]);
+    }
+}
 
-    *out = plan->steps[0].output; assert(out); assert((*out)->data);
-    return res;
+
+void stop_plan(const plan_t *plan, const pthread_t *threads)
+{
+    for (int i = 0; i < plan->num_steps; ++i) {
+        assert(threads[i]);
+        pthread_join(threads[i], NULL);
+    }
 }
 
 
@@ -170,7 +236,7 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
     step_t *right_step = operator_->right ? &plan->steps[plan->num_steps] : NULL;
 
     plan->steps[index] = (step_t) {operator_, left_step, right_step, output,
-        PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, false};
+        PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, false, false};
 
     if (operator_->right) flatten_query(operator_->right, results, plan->num_steps, plan);
 }
@@ -179,7 +245,6 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
 void init_plan(plan_t *plan)
 {
     plan->num_steps = 0;
-    plan->num_threads = 0;
     plan->steps = calloc(MAX_OPERATOR_COUNT, sizeof(step_t)); assert(plan->steps);
 }
 
@@ -190,16 +255,31 @@ void execute_query(const query_t *query, sink_t *sink)
     init_plan(&plan);
 
     // Max number of operators (64)
-    // 3: left input, right input, output
-    data_t *results = calloc(MAX_OPERATOR_COUNT * 3, sizeof(data_t)); assert(results);
+    data_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(data_t)); assert(results);
 
     flatten_query(query->root, results, 0, &plan);
 
-    data_t *out = NULL;
-    while (execute_plan(&plan, &out)) {
-        sink->push_next(sink, out);
+    pthread_t *threads = calloc(plan.num_steps, sizeof(pthread_t));
+
+    execute_plan(&plan, threads);
+
+    step_t *root = &plan.steps[0];
+    while (true) {
+        pthread_mutex_lock(&root->mutex);
+        while (!root->ready) {pthread_cond_wait(&root->cond, &root->mutex);}
+
+        if (root->quit) break;
+
+        sink->push_next(sink, root->output);
+
+        root->ready = false;
+        pthread_cond_signal(&root->cond);
+        pthread_mutex_unlock(&root->mutex);
     }
 
+    stop_plan(&plan, threads);
+
+    free(threads);
     free(plan.steps);
     free(results);
 }

@@ -27,33 +27,51 @@ TEST(bench_tests, QUERY1)
     // Extract window parameters from the benchmark state
         uint32_t window_size = 8192;
 
-        source_t *source1 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
-        source_t *source2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
+        source_t *source11 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
+        source_t *source12 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
+        source_t *source21 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
+        source_t *source22 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
 
         //sink_t *sink = create_file_sink("../../tests/query1.bin");
         sink_t *sink = create_file_sink(nullptr);
 
-        window_params_t wparams = {window_size, window_size, source1};
-        operator_t window_op1 = {
+        window_params_t wparams11 = {window_size, window_size, source11};
+        operator_t window_op11 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams}
+            .params = {.window = wparams11}
         };
 
-        window_params_t wparams2 = {window_size, window_size, source2};
-        operator_t window_op2 = {
+        window_params_t wparams12 = {window_size, window_size, source12};
+        operator_t window_op12 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams2}
+            .params = {.window = wparams12}
+        };
+
+        window_params_t wparams21 = {window_size, window_size, source21};
+        operator_t window_op21 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams21}
+        };
+
+        window_params_t wparams22 = {window_size, window_size, source22};
+        operator_t window_op22 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams22}
         };
 
         // STREAM 1
         filter_check_t avg_speed_check[1] = {check_avg_speed_prop};
         operator_t filter_avg_speed1 = {
             .type = FILTER,
-            .left = &window_op1,
+            .left = &window_op11,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = avg_speed_check}}
         };
@@ -61,7 +79,7 @@ TEST(bench_tests, QUERY1)
         filter_check_t has_simple_res_check[1] = {check_has_simple_res};
         operator_t filter_has_simple_res1 = {
             .type = FILTER,
-            .left = &window_op1,
+            .left = &window_op12,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = has_simple_res_check}}
         };
@@ -77,14 +95,14 @@ TEST(bench_tests, QUERY1)
         // STREAM 1
         operator_t filter_avg_speed2 = {
             .type = FILTER,
-            .left = &window_op2,
+            .left = &window_op21,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = avg_speed_check}}
         };
 
         operator_t filter_has_simple_res2 = {
             .type = FILTER,
-            .left = &window_op2,
+            .left = &window_op22,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = has_simple_res_check}}
         };
@@ -122,8 +140,10 @@ TEST(bench_tests, QUERY1)
 
         execute_query(&query, sink);
 
-        free_file_source(source1);
-        free_file_source(source2);
+        free_file_source(source11);
+        free_file_source(source12);
+        free_file_source(source21);
+        free_file_source(source22);
         free_file_sink(sink);
 }
 
