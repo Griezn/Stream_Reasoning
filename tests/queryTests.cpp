@@ -17,7 +17,6 @@ protected:
     source_t *gsource = nullptr;
     sink_t *gsink = nullptr;
     query_t gquery = {};
-    bool skip_teardown = false;
 
     void SetUp() override
     {
@@ -27,12 +26,6 @@ protected:
 
     void TearDown() override
     {
-        if (skip_teardown) {
-            free(gsource);
-            free(gsink);
-            return;
-        }
-
         free_generator_source(gsource);
         free_generator_sink(gsink);
     }
@@ -250,13 +243,23 @@ bool check_filter3(const triple_t in)
 /// @test Filter to get people who have a skill that is required by a project
 TEST_F(QueryTestFixture, test_query_join)
 {
-    source_set_comsumers(gsource, 2);
+    //source_set_comsumers(gsource, 2);
+    source_t *source2 = create_generator_source(1);
+
     window_params_t wparams = {36, 36,  gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
         .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,  source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
     };
 
     filter_check_t conditions1[1] = {check_filter};
@@ -272,7 +275,7 @@ TEST_F(QueryTestFixture, test_query_join)
 
     operator_t filter_req_skill = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op2,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
@@ -305,18 +308,30 @@ TEST_F(QueryTestFixture, test_query_join)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
+
+    free_generator_source(source2);
 }
 
 
 TEST_F(QueryTestFixture, test_query_select)
 {
-    source_set_comsumers(gsource, 2);
+    //source_set_comsumers(gsource, 2);
+    source_t *source2 = create_generator_source(1);
     window_params_t wparams = {36, 36,   gsource};
+
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
         .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,   source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
     };
 
     filter_check_t conditions1[1] = {check_filter};
@@ -333,7 +348,7 @@ TEST_F(QueryTestFixture, test_query_select)
 
     operator_t filter_req_skill = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op2,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
@@ -368,18 +383,30 @@ TEST_F(QueryTestFixture, test_query_select)
         {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 5));
+
+    free_generator_source(source2);
 }
 
 
 TEST_F(QueryTestFixture, test_query_select2)
 {
-    source_set_comsumers(gsource, 2);
-    window_params_t wparams = {36, 36,  gsource};
+    //source_set_comsumers(gsource, 2);
+    source_t *source2 = create_generator_source(1);
+    window_params_t wparams = {36, 36, gsource};
+
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
         .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36, source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
     };
 
     filter_check_t conditions1[1] = {check_filter};
@@ -396,7 +423,7 @@ TEST_F(QueryTestFixture, test_query_select2)
 
     operator_t filter_req_skill = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op2,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
@@ -436,6 +463,8 @@ TEST_F(QueryTestFixture, test_query_select2)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
+
+    free_generator_source(source2);
 }
 
 
@@ -461,13 +490,32 @@ bool check_filter5(const triple_t in)
 /// And that are older than 30
 TEST_F(QueryTestFixture, test_query_1)
 {
-    source_set_comsumers(gsource, 3);
+    //source_set_comsumers(gsource, 3);
+    source_t *source2 = create_generator_source(1);
+    source_t *source3 = create_generator_source(1);
+
     window_params_t wparams = {36, 36,   gsource};
     operator_t window_op = {
         .type = WINDOW,
         .left = nullptr,
         .right = nullptr,
         .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,   source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
+    };
+
+    window_params_t wparams3 = {36, 36,   source3};
+    operator_t window_op3 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams3}
     };
 
     filter_check_t conditions1[1] = {check_filter};
@@ -486,7 +534,7 @@ TEST_F(QueryTestFixture, test_query_1)
 
     operator_t filter_req_skill = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op2,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions2}}
     };
@@ -500,7 +548,7 @@ TEST_F(QueryTestFixture, test_query_1)
 
     operator_t filter_has_age = {
         .type = FILTER,
-        .left = &window_op,
+        .left = &window_op3,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions4}}
     };
@@ -533,4 +581,7 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 6));
+
+    free_generator_source(source2);
+    free_generator_source(source3);
 }

@@ -104,7 +104,7 @@ void push_next_gsink(sink_t *gsink, const data_t *data)
 sink_t *create_generator_sink()
 {
     sink_t *sink = malloc(sizeof(sink_t));
-    sink->buffer = (data_t) {NULL, 0, 1};
+    sink->buffer = (data_t) {NULL, 0, 0};
     sink->push_next = push_next_gsink;
     return sink;
 }
