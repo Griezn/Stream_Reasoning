@@ -202,6 +202,7 @@ void *execute_step(void *arg)
     step->ready = true;
     pthread_cond_signal(&step->cond);
     pthread_mutex_unlock(&step->mutex);
+    if (step->output->data) free(step->output->data);
     return NULL;
 }
 
