@@ -581,4 +581,7 @@ TEST_F(QueryTestFixture, test_query_1)
         {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
     };
     ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 6));
+
+    free_generator_source(source2);
+    free_generator_source(source3);
 }
