@@ -21,7 +21,7 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
     out->size = 0;
     out->width = in1->width + in2->width;
 
-    for (uint32_t i = 0; i < in1->size*in2->width; i += in1->width) {
+    for (uint32_t i = 0; i < in1->size*in1->width; i += in1->width) {
         for (uint32_t j = 0; j < in2->size*in2->width; j += in2->width) {
             if (join_check(in1, i, in2, j, param)) {
                 join_triple_copy(in1, i, in2, j, out);
@@ -38,7 +38,7 @@ void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_joi
     out->size = 0;
     out->width = in1->width + in2->width;
 
-    for (uint32_t i = 0; i < in1->size*in2->width; i += in1->width) {
+    for (uint32_t i = 0; i < in1->size*in1->width; i += in1->width) {
         for (uint32_t j = 0; j < in2->size*in2->width; j += in2->width) {
             if (prob_check(param.probability)) {
                 join_triple_copy(in1, i, in2, j, out);
