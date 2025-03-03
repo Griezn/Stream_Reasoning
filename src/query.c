@@ -93,25 +93,17 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 
 void handle_quit(const step_t *step)
 {
-    if (step->left_step && step->right_step) {
-        if (step->left_step->quit) {
-            step->right_step->quit = true;
-            step->right_step->ready = false;
-            pthread_cond_signal(&step->right_step->cond);
-            pthread_mutex_unlock(&step->right_step->mutex);
-        }
-        else {
-            step->left_step->quit = true;
-            step->left_step->ready = false;
-            pthread_cond_signal(&step->left_step->cond);
-            pthread_mutex_unlock(&step->left_step->mutex);
-        }
-    }
-    else if (step->left_step) { // ONLY LEFT CHILD
+    if (step->left_step) {
         step->left_step->quit = true;
         step->left_step->ready = false;
         pthread_cond_signal(&step->left_step->cond);
         pthread_mutex_unlock(&step->left_step->mutex);
+    }
+    if (step->right_step) {
+        step->right_step->quit = true;
+        step->right_step->ready = false;
+        pthread_cond_signal(&step->right_step->cond);
+        pthread_mutex_unlock(&step->right_step->mutex);
     }
 }
 
