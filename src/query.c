@@ -99,12 +99,16 @@ void handle_quit(const step_t *step)
             step->right_step->ready = false;
             pthread_cond_signal(&step->right_step->cond);
             pthread_mutex_unlock(&step->right_step->mutex);
+            if (step->operator_->right->type != WINDOW && step->right_step->output->data != NULL)
+                free(step->right_step->output->data);
         }
         else {
             step->left_step->quit = true;
             step->left_step->ready = false;
             pthread_cond_signal(&step->left_step->cond);
             pthread_mutex_unlock(&step->left_step->mutex);
+            if (step->operator_->left->type != WINDOW && step->left_step->output->data != NULL)
+                free(step->left_step->output->data);
         }
     }
     else if (step->left_step) { // ONLY LEFT CHILD
@@ -112,6 +116,8 @@ void handle_quit(const step_t *step)
         step->left_step->ready = false;
         pthread_cond_signal(&step->left_step->cond);
         pthread_mutex_unlock(&step->left_step->mutex);
+        if (step->operator_->left->type != WINDOW && step->left_step->output->data != NULL)
+            free(step->left_step->output->data);
     }
 }
 
@@ -150,21 +156,16 @@ void *execute_step(void *arg)
             case JOIN:
                 assert(left_step->output); assert(right_step->output);
                 join(left_step->output, right_step->output, output, op->params.join);
-                if (op->left->type != WINDOW) free(left_step->output->data);
-                if (op->right->type != WINDOW) free(right_step->output->data);
             break;
 
             case CARTESIAN:
                 assert(left_step->output); assert(right_step->output);
                 cart_join(left_step->output, right_step->output, output, op->params.cart_join);
-                if (op->left->type != WINDOW) free(left_step->output->data);
-                if (op->right->type != WINDOW) free(right_step->output->data);
             break;
 
             case FILTER:
                 assert(left_step->output);
                 filter(left_step->output, output, op->params.filter);
-                if (op->left->type != WINDOW) free(left_step->output->data);
             break;
 
             case WINDOW:
@@ -177,7 +178,6 @@ void *execute_step(void *arg)
             case SELECT:
                 assert(left_step->output);
                 select_query(left_step->output, output, op->params.select);
-                if (op->left->type != WINDOW) free(left_step->output->data);
             break;
         }
 
@@ -186,11 +186,13 @@ void *execute_step(void *arg)
         pthread_mutex_unlock(&step->mutex);
 
         if (left_step) {
+            //if (op->left->type != WINDOW) free(left_step->output->data);
             left_step->ready = false;
             pthread_cond_signal(&left_step->cond);
             pthread_mutex_unlock(&left_step->mutex);
         }
         if (right_step) {
+            //if (op->right->type != WINDOW) free(right_step->output->data);
             right_step->ready = false;
             pthread_cond_signal(&right_step->cond);
             pthread_mutex_unlock(&right_step->mutex);
@@ -202,7 +204,6 @@ void *execute_step(void *arg)
     step->ready = true;
     pthread_cond_signal(&step->cond);
     pthread_mutex_unlock(&step->mutex);
-    if (step->output->data) free(step->output->data);
     return NULL;
 }
 
