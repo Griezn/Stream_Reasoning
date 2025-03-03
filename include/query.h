@@ -8,13 +8,17 @@
 #include "operator.h"
 
 #include <stdint.h>
+#include <pthread.h>
 
 
 typedef struct ExecutionStep {
     const operator_t *operator_;
-    data_t *left_input;
-    data_t *right_input;
+    struct ExecutionStep *left_step;
+    struct ExecutionStep *right_step;
     data_t *output;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    bool ready;
 } step_t;
 
 #define MAX_OPERATOR_COUNT 64 //uint8_t

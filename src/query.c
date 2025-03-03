@@ -3,13 +3,9 @@
 //
 #include "query.h"
 #include "data.h"
-#include "memory.h"
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
-
-#include "utils.h"
 
 //#define malloc(size) tracked_malloc(size)
 
@@ -102,29 +98,29 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
     for (int8_t i = to; i >= from; --i) {
         const step_t *step = &plan->steps[i]; assert(step);
         const operator_t *op = step->operator_; assert(op);
-        const data_t *left_input = step->left_input;
-        const data_t *right_input = step->right_input;
+        const step_t *left_step = step->left_step;
+        const step_t *right_step = step->right_step;
         data_t *output = step->output;
 
         switch (op->type) {
             case JOIN:
-                assert(left_input); assert(right_input);
-                join(left_input, right_input, output, op->params.join);
-                if (op->left->type != WINDOW) free(left_input->data);
-                if (op->right->type != WINDOW) free(right_input->data);
+                assert(left_step->output); assert(right_step->output);
+                join(left_step->output, right_step->output, output, op->params.join);
+                if (op->left->type != WINDOW) free(left_step->output->data);
+                if (op->right->type != WINDOW) free(right_step->output->data);
             break;
 
             case CARTESIAN:
-                assert(left_input); assert(right_input);
-                cart_join(left_input, right_input, output, op->params.cart_join);
-                if (op->left->type != WINDOW) free(left_input->data);
-                if (op->right->type != WINDOW) free(right_input->data);
+                assert(left_step->output); assert(right_step->output);
+                cart_join(left_step->output, right_step->output, output, op->params.cart_join);
+                if (op->left->type != WINDOW) free(left_step->output->data);
+                if (op->right->type != WINDOW) free(right_step->output->data);
             break;
 
             case FILTER:
-                assert(left_input);
-                filter(left_input, output, op->params.filter);
-                if (op->left->type != WINDOW) free(left_input->data);
+                assert(left_step->output);
+                filter(left_step->output, output, op->params.filter);
+                if (op->left->type != WINDOW) free(left_step->output->data);
             break;
 
             case WINDOW:
@@ -141,9 +137,9 @@ bool execute_steps(const plan_t *plan, const int8_t from, const int8_t to)
             break;
 
             case SELECT:
-                assert(left_input);
-                select_query(left_input, output, op->params.select);
-                if (op->left->type != WINDOW) free(left_input->data);
+                assert(left_step->output);
+                select_query(left_step->output, output, op->params.select);
+                if (op->left->type != WINDOW) free(left_step->output->data);
             break;
         }
     }
@@ -170,10 +166,11 @@ void flatten_query(const operator_t* operator_, data_t *results, const uint8_t i
     if (operator_->left) flatten_query(operator_->left, results, index+1, plan);
 
     data_t *output = &results[index];
-    data_t *left_input = operator_->left ? &results[index+1] : NULL;
-    data_t *right_input = operator_->right ? &results[plan->num_steps] : NULL;
+    step_t *left_step = operator_->left ? &plan->steps[index+1] : NULL;
+    step_t *right_step = operator_->right ? &plan->steps[plan->num_steps] : NULL;
 
-    plan->steps[index] = (step_t) {operator_, left_input, right_input, output};
+    plan->steps[index] = (step_t) {operator_, left_step, right_step, output,
+        PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, false};
 
     if (operator_->right) flatten_query(operator_->right, results, plan->num_steps, plan);
 }
