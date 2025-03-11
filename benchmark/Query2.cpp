@@ -97,24 +97,105 @@ namespace
         uint32_t window_size = state.range(0);
         double prob = 8.f/static_cast<double>(window_size);
 
-        source_t *tsource = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
-        source_t *wsource = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 9);
+        source_t *tsource1 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 1);
+        source_t *tsource2 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 1);
+        source_t *wsource1 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource2 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource3 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource4 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource5 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource6 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource7 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource8 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
+        source_t *wsource9 = create_file_source("../../benchmark/data/AarhusWeatherData0.bin", 1);
         sink_t *sink = create_file_sink(nullptr);
 
-        window_params_t wparams_traffic = {window_size, window_size, tsource};
-        operator_t window_op_traffic = {
+        window_params_t wparams_traffic1 = {window_size, window_size, tsource1};
+        operator_t window_op_traffic1 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams_traffic}
+            .params = {.window = wparams_traffic1}
         };
 
-        window_params_t wparams_weather = {window_size, window_size, wsource};
-        operator_t window_op_weather = {
+        window_params_t wparams_traffic2 = {window_size, window_size, tsource2};
+        operator_t window_op_traffic2 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams_weather}
+            .params = {.window = wparams_traffic2}
+        };
+
+        window_params_t wparams_weather1 = {window_size, window_size, wsource1};
+        operator_t window_op_weather1 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather1}
+        };
+
+        window_params_t wparams_weather2 = {window_size, window_size, wsource2};
+        operator_t window_op_weather2 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather2}
+        };
+
+        window_params_t wparams_weather3 = {window_size, window_size, wsource3};
+        operator_t window_op_weather3 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather3}
+        };
+
+        window_params_t wparams_weather4 = {window_size, window_size, wsource4};
+        operator_t window_op_weather4 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather4}
+        };
+
+        window_params_t wparams_weather5 = {window_size, window_size, wsource5};
+        operator_t window_op_weather5 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather5}
+        };
+
+        window_params_t wparams_weather6 = {window_size, window_size, wsource6};
+        operator_t window_op_weather6 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather6}
+        };
+
+        window_params_t wparams_weather7 = {window_size, window_size, wsource7};
+        operator_t window_op_weather7 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather7}
+        };
+
+        window_params_t wparams_weather8 = {window_size, window_size, wsource8};
+        operator_t window_op_weather8 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather8}
+        };
+
+        window_params_t wparams_weather9 = {window_size, window_size, wsource9};
+        operator_t window_op_weather9 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_weather9}
         };
 
         // WEATHER DATA
@@ -122,7 +203,7 @@ namespace
         filter_check_t temp_prop_checks[1] = {check_temp_prop};
         operator_t filter_temp_prop {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather1,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = temp_prop_checks}}
         };
@@ -130,7 +211,7 @@ namespace
         filter_check_t has_simp_res_check[1] = {check_has_simple_res};
         operator_t filter_has_simple_res = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather2,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = has_simp_res_check}}
         };
@@ -146,7 +227,7 @@ namespace
         filter_check_t result_time_check[1] = {check_result_time};
         operator_t filter_result_time = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather3,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = result_time_check}}
         };
@@ -162,14 +243,14 @@ namespace
         filter_check_t hum_prop_checks[1] = {check_humidity_prop};
         operator_t filter_hum_prop {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather4,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = hum_prop_checks}}
         };
 
         operator_t filter_has_simple_res_hum = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather5,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = has_simp_res_check}}
         };
@@ -183,7 +264,7 @@ namespace
 
         operator_t filter_result_time_hum = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather6,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = result_time_check}}
         };
@@ -199,14 +280,14 @@ namespace
         filter_check_t wspd_prop_checks[1] = {check_wspd_prop};
         operator_t filter_wspd_prop {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather7,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = wspd_prop_checks}}
         };
 
         operator_t filter_has_simple_res_wspd = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather8,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = has_simp_res_check}}
         };
@@ -220,7 +301,7 @@ namespace
 
         operator_t filter_result_time_wspd = {
             .type = FILTER,
-            .left = &window_op_weather,
+            .left = &window_op_weather9,
             .right = nullptr,
             .params = {.filter = {.size = 1, .checks = result_time_check}}
         };
@@ -259,7 +340,7 @@ namespace
         filter_check_t avg_speed_check[1] = {check_avg_speed_prop};
         operator_t filter_avg_speed1 = {
             .type = FILTER,
-            .left = &window_op_traffic,
+            .left = &window_op_traffic1,
             .right = nullptr,
             .params = {.filter = {.size = 1, avg_speed_check}}
         };
@@ -267,7 +348,7 @@ namespace
         filter_check_t has_simple_res_check[1] = {check_has_simple_res};
         operator_t filter_has_simple_res1 = {
             .type = FILTER,
-            .left = &window_op_traffic,
+            .left = &window_op_traffic2,
             .right = nullptr,
             .params = {.filter = {.size = 1, has_simple_res_check}}
         };
@@ -299,10 +380,31 @@ namespace
 
         for (auto _ : state) {
             execute_query(&query, sink);
+            reset_file_source(wsource1);
+            reset_file_source(wsource2);
+            reset_file_source(wsource3);
+            reset_file_source(wsource4);
+            reset_file_source(wsource5);
+            reset_file_source(wsource6);
+            reset_file_source(wsource7);
+            reset_file_source(wsource8);
+            reset_file_source(wsource9);
+            reset_file_source(tsource1);
+            reset_file_source(tsource2);
         }
 
-        free_file_source(tsource);
-        free_file_source(wsource);
+
+        free_file_source(tsource1);
+        free_file_source(tsource2);
+        free_file_source(wsource1);
+        free_file_source(wsource2);
+        free_file_source(wsource3);
+        free_file_source(wsource4);
+        free_file_source(wsource5);
+        free_file_source(wsource6);
+        free_file_source(wsource7);
+        free_file_source(wsource8);
+        free_file_source(wsource9);
         free_file_sink(sink);
     }
 }
