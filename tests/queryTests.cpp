@@ -43,6 +43,12 @@ bool check_filter(const triple_t in)
     return in.predicate == PREDICATE_HAS_SKILL;
 }
 
+
+bool check_filter_join(const triple_t in1, const triple_t in2)
+{
+    return in1.predicate == PREDICATE_HAS_SKILL;
+}
+
 TEST_F(QueryTestFixture, test_query_filter)
 {
     window_params_t wparams = {36, 36,  gsource};
@@ -240,6 +246,12 @@ bool check_filter3(const triple_t in)
 }
 
 
+bool check_filter3_join(const triple_t in1, const triple_t in2)
+{
+    return in2.predicate == PREDICATE_REQUIRES_SKILL;
+}
+
+
 /// @test Filter to get people who have a skill that is required by a project
 TEST_F(QueryTestFixture, test_query_join)
 {
@@ -285,6 +297,62 @@ TEST_F(QueryTestFixture, test_query_join)
         .left = &filter_has_skill,
         .right = &filter_req_skill,
         .params = {.join = {.size = 1, .checks = conditions3}}
+    };
+
+    gquery = {.root = &join_op};
+
+    execute_query(&gquery, gsink);
+
+    triple_t expected[10] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_PROJECT2, PREDICATE_REQUIRES_SKILL, OBJECT_DATA_ANALYSIS},
+
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
+
+    free_generator_source(source2);
+}
+
+
+TEST_F(QueryTestFixture, test_query_join_joined)
+{
+    //source_set_comsumers(gsource, 2);
+    source_t *source2 = create_generator_source(1);
+
+    window_params_t wparams = {36, 36,  gsource};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,  source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
+    };
+
+    join_check_t conditions3[3] = {check_join, check_filter_join, check_filter3_join};
+
+    operator_t join_op = {
+        .type = JOIN,
+        .left = &window_op,
+        .right = &window_op2,
+        .params = {.join = {.size = 3, .checks = conditions3}}
     };
 
     gquery = {.root = &join_op};

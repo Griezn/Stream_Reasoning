@@ -25,12 +25,12 @@ bool check_has_simple_res(const triple_t in)
 TEST(bench_tests, QUERY1)
 {
     // Extract window parameters from the benchmark state
-        uint32_t window_size = 8192;
+        uint32_t window_size = 512;
 
-        source_t *source11 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
-        source_t *source12 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 2);
-        source_t *source21 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
-        source_t *source22 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 2);
+        source_t *source11 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 1);
+        source_t *source12 = create_file_source("../../benchmark/data/AarhusTrafficData182955.bin", 1);
+        source_t *source21 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 1);
+        source_t *source22 = create_file_source("../../benchmark/data/AarhusTrafficData158505.bin", 1);
 
         //sink_t *sink = create_file_sink("../../tests/query1.bin");
         sink_t *sink = create_file_sink(nullptr);
@@ -92,7 +92,7 @@ TEST(bench_tests, QUERY1)
             .params = {.join = {.size = 1, .checks = cond}}
         };
 
-        // STREAM 1
+        // STREAM 2
         operator_t filter_avg_speed2 = {
             .type = FILTER,
             .left = &window_op21,
@@ -133,7 +133,7 @@ TEST(bench_tests, QUERY1)
             .type = CARTESIAN,
             .left = &select_attr1,
             .right = &select_attr2,
-            .params = {.cart_join = {.probability = 8.f/8192.f}}
+            .params = {.cart_join = {.probability = 8.f/512.f}}
         };
 
         query_t query = {.root = &cart_join_main};
