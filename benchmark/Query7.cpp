@@ -62,31 +62,49 @@ namespace
         uint32_t window_size = state.range(0);
         double prob = 8.f/static_cast<double>(window_size);
 
-        source_t *source_kalk = create_file_source("../../benchmark/data/AarhusParkingDataKALKVAERKSVEJ.bin", 2);
-        source_t *source_skol = create_file_source("../../benchmark/data/AarhusParkingDataSKOLEBAKKEN.bin", 2);
+        source_t *source_kalk1 = create_file_source("../../benchmark/data/AarhusParkingDataKALKVAERKSVEJ.bin", 1);
+        source_t *source_kalk2 = create_file_source("../../benchmark/data/AarhusParkingDataKALKVAERKSVEJ.bin", 1);
+        source_t *source_skol1 = create_file_source("../../benchmark/data/AarhusParkingDataSKOLEBAKKEN.bin", 1);
+        source_t *source_skol2 = create_file_source("../../benchmark/data/AarhusParkingDataSKOLEBAKKEN.bin", 1);
         sink_t *sink = create_file_sink(nullptr);
 
-        window_params_t wparams_skol = {window_size, window_size, source_skol};
-        operator_t window_op_skol = {
+        window_params_t wparams_skol1 = {window_size, window_size, source_skol1};
+        operator_t window_op_skol1 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams_skol}
+            .params = {.window = wparams_skol1}
         };
 
-        window_params_t wparams_kalk = {window_size, window_size, source_kalk};
-        operator_t window_op_kalk = {
+        window_params_t wparams_skol2 = {window_size, window_size, source_skol2};
+        operator_t window_op_skol2 = {
             .type = WINDOW,
             .left = nullptr,
             .right = nullptr,
-            .params = {.window = wparams_kalk}
+            .params = {.window = wparams_skol2}
+        };
+
+        window_params_t wparams_kalk1 = {window_size, window_size, source_kalk1};
+        operator_t window_op_kalk1 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_kalk1}
+        };
+
+        window_params_t wparams_kalk2 = {window_size, window_size, source_kalk2};
+        operator_t window_op_kalk2 = {
+            .type = WINDOW,
+            .left = nullptr,
+            .right = nullptr,
+            .params = {.window = wparams_kalk2}
         };
 
         // STREAM KALK
         filter_check_t vehicle_count_check[1] = {check_vehicle_count_prop};
         operator_t filter_vehicle_count_kalk = {
             .type = FILTER,
-            .left = &window_op_kalk,
+            .left = &window_op_kalk1,
             .right = nullptr,
             .params = {.filter = {.size = 1, vehicle_count_check}}
         };
@@ -94,7 +112,7 @@ namespace
         filter_check_t has_simple_res_check[1] = {check_has_simple_res};
         operator_t filter_has_simple_res_kalk = {
             .type = FILTER,
-            .left = &window_op_kalk,
+            .left = &window_op_kalk2,
             .right = nullptr,
             .params = {.filter = {.size = 1, has_simple_res_check}}
         };
@@ -111,14 +129,14 @@ namespace
         // STREAM SKOL
         operator_t filter_vehicle_count_skol = {
             .type = FILTER,
-            .left = &window_op_skol,
+            .left = &window_op_skol1,
             .right = nullptr,
             .params = {.filter = {.size = 1, vehicle_count_check}}
         };
 
         operator_t filter_has_simple_res_skol = {
             .type = FILTER,
-            .left = &window_op_skol,
+            .left = &window_op_skol2,
             .right = nullptr,
             .params = {.filter = {.size = 1, has_simple_res_check}}
         };
@@ -156,10 +174,17 @@ namespace
 
         for (auto _ : state) {
             execute_query(&query, sink);
+            reset_file_source(source_kalk1);
+            reset_file_source(source_kalk2);
+            reset_file_source(source_skol1);
+            reset_file_source(source_skol2);
         }
 
-        free_file_source(source_kalk);
-        free_file_source(source_skol);
+
+        free_file_source(source_kalk1);
+        free_file_source(source_kalk2);
+        free_file_source(source_skol1);
+        free_file_source(source_skol2);
         free_file_sink(sink);
 
     }

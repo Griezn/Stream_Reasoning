@@ -106,13 +106,73 @@ void handle_quit(const step_t *step)
         step->right_step->ready = false;
         pthread_cond_signal(&step->right_step->cond);
         pthread_mutex_unlock(&step->right_step->mutex);
-        if (step->operator_->left->type != WINDOW && step->right_step->output->data != NULL)
+        if (step->operator_->right->type != WINDOW && step->right_step->output->data != NULL)
             free(step->right_step->output->data);
     }
 }
 
 
-void *execute_step(void *arg)
+void execute_step(step_t *step)
+{
+    const operator_t *op = step->operator_; assert(op);
+    step_t *left_step = step->left_step;
+    step_t *right_step = step->right_step;
+    data_t *output = step->output;
+
+    if (left_step) {
+        if (left_step->quit) {
+            step->quit = true;
+        }
+    }
+    if (right_step) {
+        if (right_step->quit) {
+            step->quit = true;
+        }
+    }
+    if (step->quit) goto skip;
+
+    switch (op->type) {
+        case JOIN:
+            assert(left_step->output); assert(right_step->output);
+            join(left_step->output, right_step->output, output, op->params.join);
+        break;
+
+        case CARTESIAN:
+            assert(left_step->output); assert(right_step->output);
+            cart_join(left_step->output, right_step->output, output, op->params.cart_join);
+        break;
+
+        case FILTER:
+            assert(left_step->output);
+            filter(left_step->output, output, op->params.filter);
+        break;
+
+        case WINDOW:
+            if (!window(output, op->params.window)) {
+                step->quit = true;
+                return;
+            }
+        break;
+
+        case SELECT:
+            assert(left_step->output);
+            select_query(left_step->output, output, op->params.select);
+        break;
+    }
+
+    skip:
+    if (left_step) {
+        assert(left_step->output);
+        if (op->left->type != WINDOW) {free(left_step->output->data); left_step->output->data = NULL;}
+    }
+    if (right_step) {
+        assert(right_step->output);
+        if (op->right->type != WINDOW) {free(right_step->output->data); right_step->output->data = NULL;}
+    }
+}
+
+
+void *execute_step_parallel(void *arg)
 {
     step_t* step = arg;
 
@@ -198,10 +258,18 @@ void *execute_step(void *arg)
 }
 
 
-void execute_plan(const plan_t *plan, pthread_t *threads)
+void execute_plan_parallel(const plan_t *plan, pthread_t *threads)
 {
     for (int i = 0; i < plan->num_steps; ++i) {
-        pthread_create(&threads[i], NULL, execute_step, &plan->steps[i]);
+        pthread_create(&threads[i], NULL, execute_step_parallel, &plan->steps[i]);
+    }
+}
+
+
+void execute_plan(const plan_t *plan)
+{
+    for (int i = plan->num_steps - 1; i >= 0; --i) {
+        execute_step(&plan->steps[i]);
     }
 }
 
@@ -251,9 +319,33 @@ void execute_query(const query_t *query, sink_t *sink)
 
     flatten_query(query->root, results, 0, &plan);
 
+    step_t *root = &plan.steps[0];
+    while (!root->quit) {
+        execute_plan(&plan);
+
+        if (!root->quit) {
+            sink->push_next(sink, root->output);
+        }
+    }
+
+    free(plan.steps);
+    free(results);
+}
+
+
+void execute_query_parallel(const query_t *query, sink_t *sink)
+{
+    plan_t plan;
+    init_plan(&plan);
+
+    // Max number of operators (64)
+    data_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(data_t)); assert(results);
+
+    flatten_query(query->root, results, 0, &plan);
+
     pthread_t *threads = calloc(plan.num_steps, sizeof(pthread_t));
 
-    execute_plan(&plan, threads);
+    execute_plan_parallel(&plan, threads);
 
     step_t *root = &plan.steps[0];
     while (true) {
