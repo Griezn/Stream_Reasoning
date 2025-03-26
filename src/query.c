@@ -106,7 +106,7 @@ void handle_quit(const step_t *step)
         step->right_step->ready = false;
         pthread_cond_signal(&step->right_step->cond);
         pthread_mutex_unlock(&step->right_step->mutex);
-        if (step->operator_->left->type != WINDOW && step->right_step->output->data != NULL)
+        if (step->operator_->right->type != WINDOW && step->right_step->output->data != NULL)
             free(step->right_step->output->data);
     }
 }
