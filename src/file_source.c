@@ -103,7 +103,7 @@ void push_next_fsink_write(sink_t *sink, const data_t *data)
 sink_t *create_file_sink(const char* path)
 {
     file_sink_t *sink = malloc(sizeof(file_sink_t));
-    sink->sink.buffer = (data_t) {NULL, 0, 1};
+    sink->sink.buffer = (data_t) {NULL, 0, 1, 0};
 
     if (path) { // There is a path so we write to a file
         sink->file = fopen(path, "wb");

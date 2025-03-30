@@ -78,7 +78,7 @@ data_t* get_next_generator(const source_t *source, const uint32_t size, const ui
 source_t *create_generator_source(const uint8_t consumers)
 {
     generator_source_t *source = malloc(sizeof(generator_source_t));
-    source->source.buffer = (data_t) {triples, NUM_TRIPLES, 1};
+    source->source.buffer = (data_t) {triples, NUM_TRIPLES, 1, 0};
     source->source.get_next = get_next_generator;
     source->source.index = 0;
     source->source.consumers = consumers;
@@ -104,7 +104,7 @@ void push_next_gsink(sink_t *gsink, const data_t *data)
 sink_t *create_generator_sink()
 {
     sink_t *sink = malloc(sizeof(sink_t));
-    sink->buffer = (data_t) {NULL, 0, 0};
+    sink->buffer = (data_t) {NULL, 0, 0, 0};
     sink->push_next = push_next_gsink;
     return sink;
 }

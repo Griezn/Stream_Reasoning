@@ -37,6 +37,7 @@ add_library(SR STATIC
         include/operator.h
         include/memory.h
         src/memory.c
+        include/buffer.h
 )
 
 enable_testing()

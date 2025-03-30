@@ -3,21 +3,29 @@
 //
 #include "data.h"
 #include "operator.h"
+#include "buffer.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "memory.h"
+
+#define malloc(size) tracked_malloc(size)
+#define realloc(ptr, size) tracked_realloc(ptr, size)
 
 void join_triple_copy(const data_t *src1, const uint32_t index1,
                         const data_t *src2, const uint32_t index2, data_t *dest)
 {
     uint32_t index = dest->size * dest->width;
     for (uint32_t i = 0; i < src1->width; ++i) {
-        dest->data[index++] = src1->data[index1 + i];
+        PUSH_TO_BUFFER(dest, index++, src1->data[index1 + i]);
+        //dest->data[index++] = src1->data[index1 + i];
     }
 
     for (uint32_t i = 0; i < src2->width; ++i) {
-        dest->data[index++] = src2->data[index2 + i];
+        PUSH_TO_BUFFER(dest, index++, src2->data[index2 + i]);
+        //dest->data[index++] = src2->data[index2 + i];
     }
 
     dest->size++;
@@ -50,7 +58,8 @@ void triple_copy(const data_t *src, const uint32_t index, data_t *dest)
 {
     uint32_t dest_index = dest->size * dest->width;
     for (uint32_t i = 0; i < src->width; ++i) {
-        dest->data[dest_index++] = src->data[index + i];
+        PUSH_TO_BUFFER(dest, dest_index++, src->data[index + i]);
+        //dest->data[dest_index++] = src->data[index + i];
     }
 
     dest->size++;

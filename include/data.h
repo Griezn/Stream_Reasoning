@@ -15,6 +15,7 @@ typedef struct Data {
     struct Triple *data;
     uint32_t size;
     uint8_t width;
+    uint32_t cap;
 } data_t;
 
 void free_data(data_t *data);

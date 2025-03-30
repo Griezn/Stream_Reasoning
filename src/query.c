@@ -7,15 +7,20 @@
 #include <assert.h>
 #include <stdlib.h>
 
-//#define malloc(size) tracked_malloc(size)
+#include "buffer.h"
+#include "memory.h"
+
+#define malloc(size) tracked_malloc(size)
+#define realloc(ptr, size) tracked_realloc(ptr, size)
 
 
 void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t param)
 {
-    const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
-    out->size = 0;
-    out->width = in1->width + in2->width;
+    //const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
+    //out->data = malloc(size * sizeof(triple_t)); assert(out->data);
+    //out->size = 0;
+    //out->width = in1->width + in2->width;
+    INIT_BUFFER(out, in1->width + in2->width);
 
     for (uint32_t i = 0; i < in1->size*in1->width; i += in1->width) {
         for (uint32_t j = 0; j < in2->size*in2->width; j += in2->width) {
@@ -29,10 +34,11 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
 
 void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_join_params_t param)
 {
-    const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
-    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
-    out->size = 0;
-    out->width = in1->width + in2->width;
+    //const uint32_t size = (in1->size * in2->size) * (in1->width + in2->width);
+    //out->data = malloc(size * sizeof(triple_t)); assert(out->data);
+    //out->size = 0;
+    //out->width = in1->width + in2->width;
+    INIT_BUFFER(out, in1->width + in2->width);
 
     for (uint32_t i = 0; i < in1->size*in1->width; i += in1->width) {
         for (uint32_t j = 0; j < in2->size*in2->width; j += in2->width) {
@@ -47,9 +53,10 @@ void cart_join(const data_t *in1, const data_t *in2, data_t *out, const cart_joi
 void filter(const data_t *in, data_t *out, const filter_params_t param)
 {
     const uint32_t size = in->size * in->width;
-    out->data = malloc(size * sizeof(triple_t)); assert(out->data);
-    out->size = 0;
-    out->width = in->width;
+    //out->data = malloc(size * sizeof(triple_t)); assert(out->data);
+    //out->size = 0;
+    //out->width = in->width;
+    INIT_BUFFER(out, in->width);
 
     for (uint32_t i = 0; i < size; i += in->width) {
         if (filter_check(in, i, param)) {
