@@ -65,15 +65,15 @@ void filter(const data_t *in, data_t *out, const filter_params_t param)
 }
 
 
-bool window(data_t *out, const window_params_t params)
+bool window(data_t **out, const window_params_t params)
 {
     data_t* data = params.source->get_next(params.source, params.size, params.step);
 
     if (data == NULL)
         return false;
 
-    *out = *data;
-    free(data);
+    free(*out);
+    *out = data;
     return true;
 }
 
@@ -146,7 +146,7 @@ void execute_step(step_t *step)
             atomic_store(&step->quit, true);
             free(output);
             //step->quit = true;
-            return;;
+            return;
         }
         spsc_dequeue(right_queue, &right_input);
         assert(right_input);
@@ -173,7 +173,7 @@ void execute_step(step_t *step)
         break;
 
         case WINDOW:
-            if (!window(output, op->params.window)) {
+            if (!window(&output, op->params.window)) {
                 atomic_store(&step->quit, true);
                 free(output);
                 return;
@@ -195,11 +195,17 @@ void execute_step(step_t *step)
             free(left_input->data); left_input->data = NULL;
             free(left_input); left_input = NULL;
         }
+        else {
+            free(left_input); left_input = NULL;
+        }
     }
     if (right_step) {
         assert(right_input);
         if (op->right->type != WINDOW) {
             free(right_input->data); right_input->data = NULL;
+            free(right_input); right_input = NULL;
+        }
+        else {
             free(right_input); right_input = NULL;
         }
     }
