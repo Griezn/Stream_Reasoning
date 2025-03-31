@@ -134,6 +134,7 @@ void execute_step(step_t *step)
     if (left_step) {
         if (atomic_load(&left_step->quit)) {
             atomic_store(&step->quit, true);
+            free(output);
             //step->quit = true;
             return;
         }
@@ -143,8 +144,9 @@ void execute_step(step_t *step)
     if (right_step) {
         if (atomic_load(&right_step->quit)) {
             atomic_store(&step->quit, true);
+            free(output);
             //step->quit = true;
-            goto skip;
+            return;;
         }
         spsc_dequeue(right_queue, &right_input);
         assert(right_input);
@@ -170,6 +172,7 @@ void execute_step(step_t *step)
         case WINDOW:
             if (!window(output, op->params.window)) {
                 atomic_store(&step->quit, true);
+                free(output);
                 return;
             }
         break;
@@ -185,11 +188,17 @@ void execute_step(step_t *step)
     skip:
     if (left_step) {
         assert(left_input);
-        if (op->left->type != WINDOW) {free(left_input->data); left_input->data = NULL;}
+        if (op->left->type != WINDOW) {
+            free(left_input->data); left_input->data = NULL;
+            free(left_input); left_input = NULL;
+        }
     }
     if (right_step) {
         assert(right_input);
-        if (op->right->type != WINDOW) {free(right_input->data); right_input->data = NULL;}
+        if (op->right->type != WINDOW) {
+            free(right_input->data); right_input->data = NULL;
+            free(right_input); right_input = NULL;
+        }
     }
 }
 
@@ -334,15 +343,24 @@ void init_plan(plan_t *plan)
 }
 
 
+void free_queues(spsc_queue_t *queues, size_t count)
+{
+    for (size_t i = 0; i < count; ++i) {
+        if (queues[i].buffer)
+            spsc_destroy(&queues[i]);
+    }
+}
+
+
 void execute_query(const query_t *query, sink_t *sink)
 {
     plan_t plan;
     init_plan(&plan);
 
     // Max number of operators (64)
-    spsc_queue_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(spsc_queue_t)); assert(results);
+    spsc_queue_t *queues= calloc(MAX_OPERATOR_COUNT, sizeof(spsc_queue_t)); assert(queues);
 
-    flatten_query(query->root, results, 0, &plan);
+    flatten_query(query->root, queues, 0, &plan);
 
     step_t *root = &plan.steps[0];
     while (!atomic_load(&root->quit)) {
@@ -356,7 +374,8 @@ void execute_query(const query_t *query, sink_t *sink)
     }
 
     free(plan.steps);
-    free(results);
+    free_queues(queues, MAX_OPERATOR_COUNT);
+    free(queues);
 }
 
 
