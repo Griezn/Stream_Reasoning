@@ -23,4 +23,6 @@ TEST(QueueTests, test1)
     ASSERT_EQ(test.cap, (*test2).cap);
 
     ASSERT_FALSE(spsc_dequeue(&queue, &test2));
+
+    spsc_destroy(&queue);
 }

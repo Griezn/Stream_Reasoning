@@ -348,7 +348,7 @@ void init_plan(plan_t *plan)
 }
 
 
-void free_queues(spsc_queue_t *queues, size_t count)
+void free_queues(spsc_queue_t *queues, const size_t count)
 {
     for (size_t i = 0; i < count; ++i) {
         if (queues[i].buffer)
@@ -363,7 +363,7 @@ void execute_query(const query_t *query, sink_t *sink)
     init_plan(&plan);
 
     // Max number of operators (64)
-    spsc_queue_t *queues= calloc(MAX_OPERATOR_COUNT, sizeof(spsc_queue_t)); assert(queues);
+    spsc_queue_t *queues = calloc(MAX_OPERATOR_COUNT, sizeof(spsc_queue_t)); assert(queues);
 
     flatten_query(query->root, queues, 0, &plan);
 
