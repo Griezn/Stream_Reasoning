@@ -151,7 +151,10 @@ void execute_step(step_t *step)
         spsc_dequeue(right_queue, &right_input);
         assert(right_input);
     }
-    if (step->quit) goto skip;
+    if (atomic_load(&step->quit)) {
+        free(output);
+        goto skip;
+    }
 
     switch (op->type) {
         case JOIN:
@@ -370,6 +373,7 @@ void execute_query(const query_t *query, sink_t *sink)
             data_t *output;
             spsc_dequeue(root->output_queue, &output);
             sink->push_next(sink, output);
+            free(output);
         }
     }
 
