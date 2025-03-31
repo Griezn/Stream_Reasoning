@@ -17,6 +17,7 @@ add_executable(
         test_utils.hpp
         dataTests.cpp
         benchTests.cpp
+        QueueTests.cpp
 )
 target_link_libraries(
         SR_tests

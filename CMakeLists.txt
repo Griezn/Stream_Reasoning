@@ -38,6 +38,8 @@ add_library(SR STATIC
         include/memory.h
         src/memory.c
         include/buffer.h
+        src/queue.c
+        include/queue.h
 )
 
 enable_testing()

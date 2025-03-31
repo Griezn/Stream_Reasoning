@@ -5,7 +5,6 @@
 #include "data.h"
 
 #include <assert.h>
-#include <stdlib.h>
 
 #include "buffer.h"
 #include "memory.h"
@@ -97,7 +96,7 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
     }
 }
 
-
+/*
 void handle_quit(const step_t *step)
 {
     if (step->left_step) {
@@ -117,68 +116,84 @@ void handle_quit(const step_t *step)
             free(step->right_step->output->data);
     }
 }
-
+*/
 
 void execute_step(step_t *step)
 {
     const operator_t *op = step->operator_; assert(op);
     step_t *left_step = step->left_step;
     step_t *right_step = step->right_step;
-    data_t *output = step->output;
+    spsc_queue_t *output_queue = step->output_queue;
+    spsc_queue_t *left_queue = step->left_queue;
+    spsc_queue_t *right_queue = step->right_queue;
+
+    data_t *output = malloc(sizeof(data_t));
+    data_t *left_input = NULL;
+    data_t *right_input = NULL;
 
     if (left_step) {
-        if (left_step->quit) {
-            step->quit = true;
+        if (atomic_load(&left_step->quit)) {
+            atomic_store(&step->quit, true);
+            //step->quit = true;
+            return;
         }
+        spsc_dequeue(left_queue, &left_input);
+        assert(left_input);
     }
     if (right_step) {
-        if (right_step->quit) {
-            step->quit = true;
+        if (atomic_load(&right_step->quit)) {
+            atomic_store(&step->quit, true);
+            //step->quit = true;
+            goto skip;
         }
+        spsc_dequeue(right_queue, &right_input);
+        assert(right_input);
     }
     if (step->quit) goto skip;
 
     switch (op->type) {
         case JOIN:
-            assert(left_step->output); assert(right_step->output);
-            join(left_step->output, right_step->output, output, op->params.join);
+            assert(left_input); assert(right_input);
+            join(left_input, right_input, output, op->params.join);
         break;
 
         case CARTESIAN:
-            assert(left_step->output); assert(right_step->output);
-            cart_join(left_step->output, right_step->output, output, op->params.cart_join);
+            assert(left_input); assert(right_input);
+            cart_join(left_input, right_input, output, op->params.cart_join);
         break;
 
         case FILTER:
-            assert(left_step->output);
-            filter(left_step->output, output, op->params.filter);
+            assert(left_input);
+            filter(left_input, output, op->params.filter);
         break;
 
         case WINDOW:
             if (!window(output, op->params.window)) {
-                step->quit = true;
+                atomic_store(&step->quit, true);
                 return;
             }
         break;
 
         case SELECT:
-            assert(left_step->output);
-            select_query(left_step->output, output, op->params.select);
+            assert(left_input);
+            select_query(left_input, output, op->params.select);
         break;
     }
 
+    spsc_enqueue(output_queue, output);
+
     skip:
     if (left_step) {
-        assert(left_step->output);
-        if (op->left->type != WINDOW) {free(left_step->output->data); left_step->output->data = NULL;}
+        assert(left_input);
+        if (op->left->type != WINDOW) {free(left_input->data); left_input->data = NULL;}
     }
     if (right_step) {
-        assert(right_step->output);
-        if (op->right->type != WINDOW) {free(right_step->output->data); right_step->output->data = NULL;}
+        assert(right_input);
+        if (op->right->type != WINDOW) {free(right_input->data); right_input->data = NULL;}
     }
 }
 
-
+/*
 void *execute_step_parallel(void *arg)
 {
     step_t* step = arg;
@@ -271,6 +286,7 @@ void execute_plan_parallel(const plan_t *plan, pthread_t *threads)
         pthread_create(&threads[i], NULL, execute_step_parallel, &plan->steps[i]);
     }
 }
+*/
 
 
 void execute_plan(const plan_t *plan)
@@ -290,22 +306,24 @@ void stop_plan(const plan_t *plan, const pthread_t *threads)
 }
 
 
-void flatten_query(const operator_t* operator_, data_t *results, const uint8_t index, plan_t *plan)
+void flatten_query(const operator_t* operator_, spsc_queue_t *queues, const uint8_t index, plan_t *plan)
 {
-    assert(operator_); assert(results); assert(plan);
+    assert(operator_); assert(queues); assert(plan);
 
     plan->num_steps++;
 
-    if (operator_->left) flatten_query(operator_->left, results, index+1, plan);
+    if (operator_->left) flatten_query(operator_->left,  queues, index+1, plan);
 
-    data_t *output = &results[index];
+    spsc_queue_t *output_queue = &queues[index];
+    spsc_init(output_queue, 512);
     step_t *left_step = operator_->left ? &plan->steps[index+1] : NULL;
+    spsc_queue_t *left_queue = operator_->left ? &queues[index+1] : NULL;
     step_t *right_step = operator_->right ? &plan->steps[plan->num_steps] : NULL;
+    spsc_queue_t *right_queue = operator_->right ? &queues[plan->num_steps] : NULL;
 
-    plan->steps[index] = (step_t) {operator_, left_step, right_step, output,
-        PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, false, false};
+    plan->steps[index] = (step_t) {operator_, left_step, right_step, left_queue, right_queue, output_queue, false};
 
-    if (operator_->right) flatten_query(operator_->right, results, plan->num_steps, plan);
+    if (operator_->right) flatten_query(operator_->right, queues, plan->num_steps, plan);
 }
 
 
@@ -322,16 +340,18 @@ void execute_query(const query_t *query, sink_t *sink)
     init_plan(&plan);
 
     // Max number of operators (64)
-    data_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(data_t)); assert(results);
+    spsc_queue_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(spsc_queue_t)); assert(results);
 
     flatten_query(query->root, results, 0, &plan);
 
     step_t *root = &plan.steps[0];
-    while (!root->quit) {
+    while (!atomic_load(&root->quit)) {
         execute_plan(&plan);
 
-        if (!root->quit) {
-            sink->push_next(sink, root->output);
+        if (!atomic_load(&root->quit)) {
+            data_t *output;
+            spsc_dequeue(root->output_queue, &output);
+            sink->push_next(sink, output);
         }
     }
 
@@ -340,15 +360,16 @@ void execute_query(const query_t *query, sink_t *sink)
 }
 
 
+/*
 void execute_query_parallel(const query_t *query, sink_t *sink)
 {
     plan_t plan;
     init_plan(&plan);
 
     // Max number of operators (64)
-    data_t *results = calloc(MAX_OPERATOR_COUNT, sizeof(data_t)); assert(results);
+    data_t *queues = calloc(MAX_OPERATOR_COUNT, sizeof(data_t)); assert(results);
 
-    flatten_query(query->root, results, 0, &plan);
+    flatten_query(query->root, queues, 0, &plan);
 
     pthread_t *threads = calloc(plan.num_steps, sizeof(pthread_t));
 
@@ -374,3 +395,4 @@ void execute_query_parallel(const query_t *query, sink_t *sink)
     free(plan.steps);
     free(results);
 }
+*/

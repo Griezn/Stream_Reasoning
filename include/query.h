@@ -6,20 +6,21 @@
 #include "source.h"
 #include "data.h"
 #include "operator.h"
+#include "queue.h"
 
 #include <stdint.h>
 #include <pthread.h>
+#include <stdatomic.h>
 
 
 typedef struct ExecutionStep {
     const operator_t *operator_;
     struct ExecutionStep *left_step;
     struct ExecutionStep *right_step;
-    data_t *output;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-    bool ready;
-    bool quit;
+    spsc_queue_t *left_queue;
+    spsc_queue_t *right_queue;
+    spsc_queue_t *output_queue;
+    atomic_bool quit;
 } step_t;
 
 #define MAX_OPERATOR_COUNT 64 //uint8_t
@@ -42,7 +43,9 @@ typedef struct {
 
 void execute_query(const query_t *query, sink_t *sink);
 
-void flatten_query(const operator_t* operator_, data_t *results, uint8_t index, plan_t *plan);
+//void execute_query_parallel(const query_t *query, sink_t *sink);
+
+void flatten_query(const operator_t* operator_, spsc_queue_t *results, uint8_t index, plan_t *plan);
 
 void join_triple_copy(const data_t *src1, uint32_t index1,
                     const data_t *src2, uint32_t index2, data_t *dest);
