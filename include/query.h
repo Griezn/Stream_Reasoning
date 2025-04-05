@@ -43,8 +43,6 @@ typedef struct {
 
 void execute_query(const query_t *query, sink_t *sink);
 
-//void execute_query_parallel(const query_t *query, sink_t *sink);
-
 void flatten_query(const operator_t* operator_, spsc_queue_t *results, uint8_t index, plan_t *plan);
 
 void join_triple_copy(const data_t *src1, uint32_t index1,
