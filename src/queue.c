@@ -58,3 +58,11 @@ bool spsc_dequeue(spsc_queue_t *q, data_t **item)
     atomic_store_explicit(&q->head, current_head + 1, memory_order_release);
     return true;
 }
+
+bool spsc_is_empty(spsc_queue_t *q)
+{
+    size_t head = atomic_load_explicit(&q->head, memory_order_acquire);
+    size_t tail = atomic_load_explicit(&q->tail, memory_order_acquire);
+    return head == tail;
+}
+
