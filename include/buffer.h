@@ -5,6 +5,8 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <stdlib.h>
+
 #define INITIAL_BUFFER_CAPACITY 8
 
 #define INIT_BUFFER(out, _width)              \
