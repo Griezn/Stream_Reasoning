@@ -66,3 +66,13 @@ bool spsc_is_empty(spsc_queue_t *q)
     return head == tail;
 }
 
+
+void empty_queue(spsc_queue_t *q)
+{
+    data_t *output;
+    while (!spsc_is_empty(q)) {
+        spsc_dequeue(q, &output);
+        free(output->data);
+        free(output);
+    }
+}

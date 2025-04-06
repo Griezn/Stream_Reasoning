@@ -107,6 +107,7 @@ void *execute_step(void *args)
                 if (spsc_dequeue(left_queue, &left_input)) break;
                 if (atomic_load(&left_step->quit) && spsc_is_empty(left_queue)) {
                     atomic_store(&step->quit, true);
+                    empty_queue(left_queue);
                     break;
                 }
             }
@@ -116,6 +117,7 @@ void *execute_step(void *args)
                 if (spsc_dequeue(right_queue, &right_input)) break;
                 if (atomic_load(&right_step->quit) && spsc_is_empty(right_queue)) {
                     atomic_store(&step->quit, true);
+                    empty_queue(right_queue);
                     break;
                 }
             }
@@ -162,24 +164,20 @@ void *execute_step(void *args)
     skip:
         if (left_step) {
             if (op->left->type != WINDOW && left_input) {
-                assert(left_input);
                 free(left_input->data);
                 left_input->data = NULL;
-                free(left_input);
-                left_input = NULL;
-            } else {
+            }
+            if (left_input) {
                 free(left_input);
                 left_input = NULL;
             }
         }
         if (right_step) {
             if (op->right->type != WINDOW && right_input) {
-                assert(right_input);
                 free(right_input->data);
                 right_input->data = NULL;
-                free(right_input);
-                right_input = NULL;
-            } else {
+            }
+            if (right_input) {
                 free(right_input);
                 right_input = NULL;
             }
