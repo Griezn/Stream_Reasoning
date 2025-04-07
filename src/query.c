@@ -162,7 +162,7 @@ void *execute_step(void *args)
         }
         if (atomic_load(&step->quit)) {
             free(output);
-            cleanup_children(step, left_input, right_input);
+            handle_quit(step, left_input, right_input);
             return NULL;
         }
 
