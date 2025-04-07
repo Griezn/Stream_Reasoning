@@ -23,6 +23,21 @@ typedef struct ExecutionStep {
     atomic_bool quit;
 } step_t;
 
+#define UNPACK_STEP_FIELDS(step)                      \
+    const operator_t *op = step->operator_;           \
+    step_t *left_step = (step)->left_step;            \
+    step_t *right_step = (step)->right_step;          \
+    spsc_queue_t *output_queue = (step)->output_queue;\
+    spsc_queue_t *left_queue = (step)->left_queue;    \
+    spsc_queue_t *right_queue = (step)->right_queue;
+
+
+#define UNPACK_STEP_FIELDS_WO_QUEUES(step)            \
+    const operator_t *op = step->operator_;           \
+    step_t *left_step = (step)->left_step;            \
+    step_t *right_step = (step)->right_step;          \
+
+
 #define MAX_OPERATOR_COUNT 64 //uint8_t
 
 typedef struct ExecutionPlan {

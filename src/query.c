@@ -86,17 +86,55 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
+void cleanup_children(step_t *step, data_t *lefti, data_t *righti)
+{
+    UNPACK_STEP_FIELDS_WO_QUEUES(step);
+
+    if (left_step) {
+        if (op->left->type != WINDOW && lefti) {
+            free(lefti->data);
+            lefti->data = NULL;
+        }
+        if (lefti) {
+            free(lefti);
+            lefti = NULL;
+        }
+
+    }
+    if (right_step) {
+        if (op->right->type != WINDOW && righti) {
+            free(righti->data);
+            righti->data = NULL;
+        }
+        if (righti) {
+            free(righti);
+            righti = NULL;
+        }
+    }
+}
+
+void handle_quit(step_t *step, data_t *lefti, data_t *righti)
+{
+    UNPACK_STEP_FIELDS(step);
+    (void) op; (void) output_queue;
+
+    cleanup_children(step, lefti, righti);
+
+    if (lefti) {
+        atomic_store(&left_step->quit, true);
+        empty_queue(left_queue);
+    }
+    if (righti) {
+        atomic_store(&right_step->quit, true);
+        empty_queue(right_queue);
+    }
+}
+
 void *execute_step(void *args)
 {
     step_t *step = args;
     while (!atomic_load(&step->quit)) {
-        const operator_t *op = step->operator_;
-        assert(op);
-        step_t *left_step = step->left_step;
-        step_t *right_step = step->right_step;
-        spsc_queue_t *output_queue = step->output_queue;
-        spsc_queue_t *left_queue = step->left_queue;
-        spsc_queue_t *right_queue = step->right_queue;
+        UNPACK_STEP_FIELDS(step);
 
         data_t *output = malloc(sizeof(data_t));
         data_t *left_input = NULL;
@@ -124,7 +162,8 @@ void *execute_step(void *args)
         }
         if (atomic_load(&step->quit)) {
             free(output);
-            goto skip;
+            cleanup_children(step, left_input, right_input);
+            return NULL;
         }
 
         switch (op->type) {
@@ -159,29 +198,17 @@ void *execute_step(void *args)
                 break;
         }
 
+        if (atomic_load(&step->quit)) {
+            if (op->type != WINDOW) free(output->data);
+            free(output);
+
+            handle_quit(step, left_input, right_input);
+            return NULL;
+        }
+
         spsc_enqueue(output_queue, output);
 
-    skip:
-        if (left_step) {
-            if (op->left->type != WINDOW && left_input) {
-                free(left_input->data);
-                left_input->data = NULL;
-            }
-            if (left_input) {
-                free(left_input);
-                left_input = NULL;
-            }
-        }
-        if (right_step) {
-            if (op->right->type != WINDOW && right_input) {
-                free(right_input->data);
-                right_input->data = NULL;
-            }
-            if (right_input) {
-                free(right_input);
-                right_input = NULL;
-            }
-        }
+        cleanup_children(step, left_input, right_input);
     }
 
     return NULL;
