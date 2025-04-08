@@ -69,7 +69,7 @@ bool spsc_is_empty(spsc_queue_t *q)
 
 void empty_queue(spsc_queue_t *q)
 {
-    data_t *output;
+    data_t *output = NULL;
     while (!spsc_is_empty(q)) {
         spsc_dequeue(q, &output);
         free(output->data);

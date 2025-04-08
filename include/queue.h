@@ -9,8 +9,8 @@
 #include "data.h"
 
 typedef struct {
-    _Alignas(64) atomic_size_t  head;
-    _Alignas(64) atomic_size_t  tail;
+    alignas(64) atomic_size_t  head;
+    alignas(64) atomic_size_t  tail;
     size_t                      mask;
     data_t                      **buffer;
 } spsc_queue_t;
