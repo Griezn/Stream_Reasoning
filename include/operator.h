@@ -11,6 +11,7 @@
 
 enum OPERATORS {
     JOIN,
+    HASH_JOIN,
     CARTESIAN,
     FILTER,
     WINDOW,
@@ -22,13 +23,20 @@ typedef bool (*join_check_t)(triple_t in1, triple_t in2);
 typedef bool (*filter_check_t)(triple_t in);
 
 typedef struct JoinParams {
-    uint8_t      size;
+    uint8_t size;
     join_check_t *checks;
 } join_params_t;
 
 typedef struct CartJoinParams {
-    double  probability;
+    double probability;
 } cart_join_params_t;
+
+typedef struct HashJoinParams {
+    uint32_t    predicate_in1;
+    uint8_t     offset_in1;
+    uint32_t    predicate_in2;
+    uint8_t     offset_in2;
+} hash_join_params_t;
 
 typedef struct FilterParams {
     uint8_t size;
@@ -48,18 +56,19 @@ typedef struct WindowParams {
 } window_params_t;
 
 typedef union Parameters {
-    struct JoinParams       join;
-    struct CartJoinParams   cart_join;
-    struct FilterParams     filter;
-    struct SelectParams     select;
-    struct WindowParams     window;
+    struct JoinParams join;
+    struct HashJoinParams hash_join;
+    struct CartJoinParams cart_join;
+    struct FilterParams filter;
+    struct SelectParams select;
+    struct WindowParams window;
 } parameter_t;
 
 typedef struct Operator {
-    enum    OPERATORS   type;
-    struct  Operator    *left;
-    struct  Operator    *right;
-    union   Parameters  params;
+    enum OPERATORS type;
+    struct Operator *left;
+    struct Operator *right;
+    union Parameters params;
 } operator_t;
 
 #endif //OPERATOR_H

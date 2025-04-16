@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include "buffer.h"
+#include "hash_table.h"
 //#include "memory.h"
 
 //#define malloc(size) tracked_malloc(size)
@@ -24,6 +25,40 @@ void join(const data_t *in1, const data_t *in2, data_t *out, const join_params_t
             }
         }
     }
+}
+
+
+uint32_t get_key_offset(const uint32_t predicate_in, const uint8_t offset_in, const data_t *in)
+{
+    for (int i = 0; i < in->width; ++i) {
+        if (in->data[i].predicate == predicate_in)
+            return i*3 + offset_in;
+    }
+
+    return 0;
+}
+
+
+void hash_join(const data_t *in1, const data_t *in2, data_t *out, const hash_join_params_t params)
+{
+    INIT_BUFFER(out, in1->width + in2->width);
+    hash_table_t ht = create_table(in1->size);
+    const uint32_t key_offset_in1 = get_key_offset(params.predicate_in1, params.offset_in1, in1);
+
+    // Init hash table
+    for (uint32_t i = 0; i < in1->size * in1->width; i += in1->width) {
+        insert(&ht, key_offset_in1, &in1->data[i]);
+    }
+
+    const uint32_t key_offset_in2 = get_key_offset(params.predicate_in2, params.offset_in2, in2);
+    for (uint32_t i = 0; i < in2->size * in2->width; i += in2->width) {
+        bucket_t *bucket = contains(&ht, key_offset_in1, key_offset_in2, &in2->data[i]);
+        if (bucket != NULL) {
+            join_bucket_copy(in1, bucket, in2, i, out);
+        }
+    }
+
+    free_table(&ht);
 }
 
 
@@ -86,7 +121,7 @@ void select_query(const data_t *in, data_t *out, const select_params_t param)
 }
 
 
-void cleanup_children(step_t *step, data_t *lefti, data_t *righti)
+void cleanup_children(const step_t *step, data_t *lefti, data_t *righti)
 {
     UNPACK_STEP_FIELDS_WO_QUEUES(step);
 
@@ -99,7 +134,6 @@ void cleanup_children(step_t *step, data_t *lefti, data_t *righti)
             free(lefti);
             lefti = NULL;
         }
-
     }
     if (right_step) {
         if (op->right->type != WINDOW && righti) {
@@ -113,22 +147,33 @@ void cleanup_children(step_t *step, data_t *lefti, data_t *righti)
     }
 }
 
-void handle_quit(step_t *step, data_t *lefti, data_t *righti)
+
+void handle_quit(const step_t *step, data_t *lefti, data_t *righti)
 {
     UNPACK_STEP_FIELDS(step);
-    (void) op; (void) output_queue;
+    (void) op;
+    (void) output_queue;
 
     cleanup_children(step, lefti, righti);
 
     if (lefti) {
         atomic_store(&left_step->quit, true);
-        empty_queue(left_queue);
+
+        if (left_step->operator_->type != WINDOW)
+            empty_queue(left_queue);
+        else
+            empty_queue_ndata(left_queue);
     }
     if (righti) {
         atomic_store(&right_step->quit, true);
-        empty_queue(right_queue);
+
+        if (right_step->operator_->type != WINDOW)
+            empty_queue(right_queue);
+        else
+            empty_queue_ndata(right_queue);
     }
 }
+
 
 void *execute_step(void *args)
 {
@@ -171,6 +216,12 @@ void *execute_step(void *args)
                 assert(left_input);
                 assert(right_input);
                 join(left_input, right_input, output, op->params.join);
+                break;
+
+            case HASH_JOIN:
+                assert(left_input);
+                assert(right_input);
+                hash_join(left_input, right_input, output, op->params.hash_join);
                 break;
 
             case CARTESIAN:

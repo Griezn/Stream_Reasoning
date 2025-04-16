@@ -7,12 +7,12 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
+#include "hash_table.h"
 #include "memory.h"
 
-#define malloc(size) tracked_malloc(size)
-#define realloc(ptr, size) tracked_realloc(ptr, size)
+#define malloc(size) malloc(size)
+#define realloc(ptr, size) realloc(ptr, size)
 
 void join_triple_copy(const data_t *src1, const uint32_t index1,
                         const data_t *src2, const uint32_t index2, data_t *dest)
@@ -29,6 +29,27 @@ void join_triple_copy(const data_t *src1, const uint32_t index1,
     }
 
     dest->size++;
+}
+
+
+void join_bucket_copy(const data_t *src1, bucket_t *bucket,
+                    const data_t *src2, uint32_t index2, data_t *dest)
+{
+    uint32_t index = dest->size * dest->width;
+    for (size_t j = 0; j < bucket->count; ++j) {
+        for (uint32_t i = 0; i < src1->width; ++i) {
+            //PUSH_TO_BUFFER(dest, index++, el1[i]);
+            PUSH_TO_BUFFER(dest, index++, bucket->tuples[j][i]);
+            //dest->data[index++] = src1->data[index1 + i];
+        }
+
+        for (uint32_t i = 0; i < src2->width; ++i) {
+            PUSH_TO_BUFFER(dest, index++, src2->data[index2 + i]);
+            //dest->data[index++] = src2->data[index2 + i];
+        }
+
+        dest->size++;
+    }
 }
 
 

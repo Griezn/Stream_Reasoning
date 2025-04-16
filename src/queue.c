@@ -4,6 +4,11 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <memory.h>
+
+#define malloc(size) malloc(size)
+#define realloc(ptr, size) realloc(ptr, size)
+#define free(ptr, size) free(ptr)
 
 bool spsc_init(spsc_queue_t *q, size_t size)
 {
@@ -25,7 +30,7 @@ bool spsc_init(spsc_queue_t *q, size_t size)
 
 void spsc_destroy(spsc_queue_t *q)
 {
-    free(q->buffer);
+    free(q->buffer, 512 * sizeof(void *));
     q->buffer = NULL; // Prevent use-after-free
 }
 
@@ -72,7 +77,16 @@ void empty_queue(spsc_queue_t *q)
     data_t *output = NULL;
     while (!spsc_is_empty(q)) {
         spsc_dequeue(q, &output);
-        free(output->data);
-        free(output);
+        free(output->data, output->cap);
+        free(output, sizeof(data_t));
+    }
+}
+
+void empty_queue_ndata(spsc_queue_t *q)
+{
+    data_t *output = NULL;
+    while (!spsc_is_empty(q)) {
+        spsc_dequeue(q, &output);
+        free(output, sizeof(data_t));
     }
 }

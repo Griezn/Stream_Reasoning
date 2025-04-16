@@ -40,6 +40,8 @@ add_library(SR STATIC
         include/buffer.h
         src/queue.c
         include/queue.h
+        include/hash_table.h
+        src/hash_table.c
 )
 
 enable_testing()

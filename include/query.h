@@ -12,6 +12,8 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
+#include "hash_table.h"
+
 
 typedef struct ExecutionStep {
     const operator_t *operator_;
@@ -61,6 +63,9 @@ void execute_query(const query_t *query, sink_t *sink);
 void flatten_query(const operator_t* operator_, spsc_queue_t *results, uint8_t index, plan_t *plan);
 
 void join_triple_copy(const data_t *src1, uint32_t index1,
+                    const data_t *src2, uint32_t index2, data_t *dest);
+
+void join_bucket_copy(const data_t *src1, bucket_t *bucket,
                     const data_t *src2, uint32_t index2, data_t *dest);
 
 bool join_check(const data_t *src1, uint32_t index1,

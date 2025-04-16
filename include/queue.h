@@ -27,4 +27,6 @@ bool spsc_is_empty(spsc_queue_t *q);
 
 void empty_queue(spsc_queue_t *q);
 
+void empty_queue_ndata(spsc_queue_t *q);
+
 #endif //SPSC_QUEUE_LIBRARY_H

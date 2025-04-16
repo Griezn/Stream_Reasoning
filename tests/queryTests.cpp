@@ -325,6 +325,79 @@ TEST_F(QueryTestFixture, test_query_join)
 }
 
 
+/// @test Filter to get people who have a skill that is required by a project
+TEST_F(QueryTestFixture, test_query_hash_join)
+{
+    //source_set_comsumers(gsource, 2);
+    source_t *source2 = create_generator_source(1);
+
+    window_params_t wparams = {36, 36,  gsource};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,  source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
+    };
+
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter3};
+
+    operator_t filter_has_skill = {
+        .type = FILTER,
+        .left = &window_op,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions1}}
+    };
+
+    operator_t filter_req_skill = {
+        .type = FILTER,
+        .left = &window_op2,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions2}}
+    };
+
+    operator_t hash_join_op = {
+        .type = HASH_JOIN,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
+        .params = {.hash_join = {.predicate_in1 = PREDICATE_HAS_SKILL, .offset_in1 = 2,
+            .predicate_in2 = PREDICATE_REQUIRES_SKILL, .offset_in2 = 2}}
+    };
+
+    gquery = {.root = &hash_join_op};
+
+    execute_query(&gquery, gsink);
+
+    triple_t expected[10] = {
+        {SUBJECT_ALICE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_EMILY, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_BOB, PREDICATE_HAS_SKILL, OBJECT_DATA_ANALYSIS},
+        {SUBJECT_PROJECT2, PREDICATE_REQUIRES_SKILL, OBJECT_DATA_ANALYSIS},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 10));
+
+    free_generator_source(source2);
+}
+
+
 TEST_F(QueryTestFixture, test_query_join_joined)
 {
     //source_set_comsumers(gsource, 2);
@@ -631,6 +704,123 @@ TEST_F(QueryTestFixture, test_query_1)
     operator_t filter_older = {
         .type = FILTER,
         .left = &join_age,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions6}}
+    };
+
+    gquery = {.root = &filter_older};
+
+    execute_query(&gquery, gsink);
+
+    triple_t expected[6] = {
+        {SUBJECT_CHARLIE, PREDICATE_HAS_AGE, 35},
+        {SUBJECT_CHARLIE, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+
+        {SUBJECT_DAVID, PREDICATE_HAS_AGE, 40},
+        {SUBJECT_DAVID, PREDICATE_HAS_SKILL, OBJECT_PROGRAMMING},
+        {SUBJECT_PROJECT1, PREDICATE_REQUIRES_SKILL, OBJECT_PROGRAMMING},
+    };
+    ASSERT_TRUE(ARR_EQ(gsink->buffer.data, expected, 6));
+
+    free_generator_source(source2);
+    free_generator_source(source3);
+}
+
+
+/// @test Filter to get people who have a skill that is required by a project
+/// And that are older than 30
+TEST_F(QueryTestFixture, test_query_1_hash)
+{
+    //source_set_comsumers(gsource, 3);
+    source_t *source2 = create_generator_source(1);
+    source_t *source3 = create_generator_source(1);
+
+    window_params_t wparams = {36, 36,   gsource};
+    operator_t window_op = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams}
+    };
+
+    window_params_t wparams2 = {36, 36,   source2};
+    operator_t window_op2 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams2}
+    };
+
+    window_params_t wparams3 = {36, 36,   source3};
+    operator_t window_op3 = {
+        .type = WINDOW,
+        .left = nullptr,
+        .right = nullptr,
+        .params = {.window = wparams3}
+    };
+
+    filter_check_t conditions1[1] = {check_filter};
+    filter_check_t conditions2[1] = {check_filter3};
+    join_check_t conditions3[1] = {check_join};
+    filter_check_t conditions4[1] = {check_filter4};
+    join_check_t conditions5[1] = {check_join2};
+    filter_check_t conditions6[1] = {check_filter5};
+
+    operator_t filter_has_skill = {
+        .type = FILTER,
+        .left = &window_op,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions1}}
+    };
+
+    operator_t filter_req_skill = {
+        .type = FILTER,
+        .left = &window_op2,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions2}}
+    };
+
+    operator_t join_skill = {
+        .type = JOIN,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
+        .params = {.join = {.size = 1, .checks = conditions3}}
+    };
+
+    operator_t hash_join_skill = {
+        .type = HASH_JOIN,
+        .left = &filter_has_skill,
+        .right = &filter_req_skill,
+        .params = {.hash_join = {.predicate_in1 = PREDICATE_HAS_SKILL, .offset_in1 = 2,
+            .predicate_in2 = PREDICATE_REQUIRES_SKILL, .offset_in2 = 2}}
+    };
+
+    operator_t filter_has_age = {
+        .type = FILTER,
+        .left = &window_op3,
+        .right = nullptr,
+        .params = {.filter = {.size = 1, .checks = conditions4}}
+    };
+
+    operator_t join_age = {
+        .type = JOIN,
+        .left = &filter_has_age,
+        .right = &join_skill,
+        .params = {.join = {.size = 1, .checks = conditions5}}
+    };
+
+    operator_t hash_join_age = {
+        .type = HASH_JOIN,
+        .left = &filter_has_age,
+        .right = &hash_join_skill,
+        .params = {.hash_join = {.predicate_in1 = PREDICATE_HAS_AGE, .offset_in1 = 0,
+            .predicate_in2 = PREDICATE_HAS_SKILL, .offset_in2 = 0}}
+    };
+
+    operator_t filter_older = {
+        .type = FILTER,
+        .left = &hash_join_age,
         .right = nullptr,
         .params = {.filter = {.size = 1, .checks = conditions6}}
     };
